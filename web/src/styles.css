@@ -602,3 +602,17 @@ nav.section-nav {
 @media (min-width: 900px) {
   .ledger-grid { grid-template-columns: minmax(260px, 1fr) 1.7fr; align-items: start; }
 }
+
+/* Botón "Donar" dentro del popup de una necesidad en el mapa. */
+.leaflet-donate-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  background: var(--green);
+  color: #fff !important;
+  text-decoration: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.leaflet-donate-btn:hover { background: var(--green-dark); }

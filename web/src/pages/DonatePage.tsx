@@ -47,6 +47,19 @@ export function DonatePage() {
       .catch(() => setCenters([]));
   }, [identityId]);
 
+  // Preselección desde el mapa: #/centros?view=donar&need=<id> abre esa necesidad directamente.
+  useEffect(() => {
+    if (!identityId) return;
+    const readNeed = () => {
+      const q = window.location.hash.split("?")[1] ?? "";
+      const id = new URLSearchParams(q).get("need");
+      if (id) api.getNeed(id).then(setSelected).catch(() => {});
+    };
+    readNeed();
+    window.addEventListener("hashchange", readNeed);
+    return () => window.removeEventListener("hashchange", readNeed);
+  }, [identityId]);
+
   const usingCenter = pickupSource.startsWith("centro:");
   const canPublish = usingCenter || !!pickup;
 

@@ -166,7 +166,12 @@ function popupHtml(need: Need): string {
     ? `<br/><strong>${t.common.contactLabel}</strong> ${escapeHtml(need.contactPublic)}`
     : "";
   const note = need.note ? `<br/>${escapeHtml(need.note)}` : "";
-  return `<strong>${urgency}</strong> · ${status}<br/>${items}${note}${contact}`;
+  // Botón para donar directamente a esta necesidad (solo si sigue pendiente).
+  const donate =
+    need.status === "pendiente"
+      ? `<br/><a class="leaflet-donate-btn" href="#/centros?view=donar&need=${encodeURIComponent(need.id)}">Donar a esta necesidad</a>`
+      : "";
+  return `<strong>${urgency}</strong> · ${status}<br/>${items}${note}${contact}${donate}`;
 }
 
 function escapeHtml(s: string): string {
