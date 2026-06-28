@@ -67,29 +67,25 @@ export function MapPicker({
 
   return (
     <div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", marginBottom: "0.4rem" }}>
-        <p className="muted" style={{ margin: 0, flex: 1 }}>
-          {t.form.pickLocation}
-        </p>
-        <button type="button" className="btn secondary" onClick={useMyLocation} disabled={locating}>
-          <LocateFixed size={16} aria-hidden="true" /> {locating ? "Ubicando…" : "Usar mi ubicación actual"}
+      <p className="muted" style={{ margin: "0 0 0.4rem" }}>
+        {t.form.pickLocation}
+      </p>
+      <div className="map-picker-wrap" style={{ height: "300px" }}>
+        <div ref={ref} role="application" aria-label={t.form.pickLocation} style={{ height: "100%" }} />
+        <button
+          type="button"
+          className="map-locate-btn"
+          onClick={useMyLocation}
+          disabled={locating}
+          aria-label="Usar mi ubicación actual"
+          title="Usar mi ubicación actual"
+        >
+          <LocateFixed size={18} aria-hidden="true" />
         </button>
       </div>
-      <div
-        ref={ref}
-        role="application"
-        aria-label={t.form.pickLocation}
-        style={{ height: "300px", borderRadius: "10px", overflow: "hidden" }}
-      />
-      {picked ? (
-        <p className="muted" style={{ marginTop: "0.4rem" }}>
-          Punto marcado. Puedes ajustarlo tocando otra vez el mapa.
-        </p>
-      ) : (
-        <p className="muted" style={{ marginTop: "0.4rem" }}>
-          {t.form.locationHelp}
-        </p>
-      )}
+      <p className="muted" style={{ marginTop: "0.4rem" }}>
+        {picked ? "Punto marcado. Puedes ajustarlo tocando otra vez el mapa." : t.form.locationHelp}
+      </p>
     </div>
   );
 }
