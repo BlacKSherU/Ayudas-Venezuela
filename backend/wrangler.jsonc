@@ -8,25 +8,24 @@
     "enabled": true
   },
   "vars": {
-    "ENVIRONMENT": "development",
-    // Origen del frontend (Cloudflare Pages) permitido por CORS. Ajustar en producción.
-    "ALLOWED_ORIGIN": "http://localhost:5173",
+    "ENVIRONMENT": "production",
+    // Origen del frontend (Cloudflare Pages) permitido por CORS.
+    // Para desarrollo local, sobrescribir en .dev.vars (ENVIRONMENT, ALLOWED_ORIGIN).
+    "ALLOWED_ORIGIN": "https://ayuda-venezuela-cpe.pages.dev",
     "EMAIL_FROM": "no-reply@ayuda-venezuela.org"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "ayuda-venezuela",
-      // Reemplazar con el id real tras `wrangler d1 create ayuda-venezuela`.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "129dc6d5-5bf8-40d7-af0f-95f37d26df01",
       "migrations_dir": "migrations"
     }
   ],
   "kv_namespaces": [
     {
       "binding": "CONFIG",
-      // Reemplazar con el id real tras `wrangler kv namespace create CONFIG`.
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      "id": "7dd24a11c4834044ae50f31bda93cb70"
     }
   ],
   "durable_objects": {
