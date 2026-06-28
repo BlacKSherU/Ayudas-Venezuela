@@ -116,4 +116,54 @@ describe("voluntarios multi-rol (feature 4 · US3)", () => {
     const roles = body.roles.map((x) => x.roleCode).sort();
     expect(roles).toEqual(["repartidor", "transportista"]);
   });
+
+  it("donar a un centro crea la orden y el dueño la ve con su código de recepción", async () => {
+    const owner = await authenticate("dueno-centro@ejemplo.com");
+    const created = await createCenter(owner, "Centro Receptor");
+    const center = (await created.json()) as { id: string };
+
+    const donor = await authenticate("donante-centro@ejemplo.com");
+    const res = await SELF.fetch(`${BASE}/orders`, {
+      method: "POST",
+      headers: { Cookie: donor, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        targetCenterId: center.id,
+        items: [{ categoryCode: "agua", quantity: "10 L" }],
+        pickupLocation: { lat: 10.05, lng: -69.3 },
+      }),
+    });
+    expect(res.status).toBe(201);
+    const order = (await res.json()) as {
+      order: { id: string };
+      pickupCode: string;
+      dropoffCode: string;
+    };
+    expect(order.pickupCode).toBeTruthy();
+    expect(order.dropoffCode).toBeTruthy();
+
+    // El dueño del centro es dueño de la necesidad interna: ve la orden en sus entregas entrantes.
+    const incoming = await SELF.fetch(`${BASE}/orders/incoming`, { headers: { Cookie: owner } });
+    const inc = (await incoming.json()) as { orders: { id: string; dropoffCode: string | null }[] };
+    const match = inc.orders.find((o) => o.id === order.order.id);
+    expect(match).toBeTruthy();
+    expect(match?.dropoffCode).toBe(order.dropoffCode);
+  });
+
+  it("donar a un centro requiere indicar insumos", async () => {
+    const owner = await authenticate("dueno-sin-items@ejemplo.com");
+    const created = await createCenter(owner, "Centro Sin Items");
+    const center = (await created.json()) as { id: string };
+
+    const donor = await authenticate("donante-sin-items@ejemplo.com");
+    const res = await SELF.fetch(`${BASE}/orders`, {
+      method: "POST",
+      headers: { Cookie: donor, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        targetCenterId: center.id,
+        items: [],
+        pickupLocation: { lat: 10.05, lng: -69.3 },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
 });
