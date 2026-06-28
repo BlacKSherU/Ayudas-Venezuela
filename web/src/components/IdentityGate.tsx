@@ -3,11 +3,14 @@ import { api, ApiError } from "../lib/api";
 import { useSession } from "../App";
 import { t } from "../i18n";
 
-/** Verificación de identidad ligera por OTP. Llama a `onAuthed` al iniciar sesión. */
+type Channel = "email" | "phone";
+
+/** Verificación de identidad ligera por OTP (correo o WhatsApp). Llama a `onAuthed` al entrar. */
 export function IdentityGate({ onAuthed }: { onAuthed?: () => void }) {
   const { refresh } = useSession();
   const [step, setStep] = useState<"request" | "verify">("request");
-  const [email, setEmail] = useState("");
+  const [channel, setChannel] = useState<Channel>("email");
+  const [contact, setContact] = useState("");
   const [code, setCode] = useState("");
   const [requestId, setRequestId] = useState("");
   const [devCode, setDevCode] = useState<string | undefined>();
@@ -19,7 +22,7 @@ export function IdentityGate({ onAuthed }: { onAuthed?: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const r = await api.requestCode("email", email);
+      const r = await api.requestCode(channel, contact);
       setRequestId(r.requestId);
       setDevCode(r.devCode);
       setStep("verify");
@@ -57,16 +60,55 @@ export function IdentityGate({ onAuthed }: { onAuthed?: () => void }) {
 
       {step === "request" ? (
         <form onSubmit={sendCode}>
-          <label htmlFor="email">{t.identity.email}</label>
-          <input
-            id="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <p style={{ fontWeight: 600, margin: "0.5rem 0 0.25rem" }}>{t.identity.chooseChannel}</p>
+          <div className="chips" role="group" aria-label={t.identity.chooseChannel}>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={channel === "email"}
+              onClick={() => setChannel("email")}
+            >
+              ✉️ {t.identity.byEmail}
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-pressed={channel === "phone"}
+              onClick={() => setChannel("phone")}
+            >
+              💬 {t.identity.byWhatsapp}
+            </button>
+          </div>
+
+          {channel === "email" ? (
+            <>
+              <label htmlFor="contact">{t.identity.email}</label>
+              <input
+                id="contact"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                required
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+              />
+            </>
+          ) : (
+            <>
+              <label htmlFor="contact">{t.identity.phone}</label>
+              <input
+                id="contact"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder={t.identity.phonePlaceholder}
+                required
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+              />
+            </>
+          )}
+
           <div style={{ marginTop: "0.75rem" }}>
             <button className="btn" type="submit" disabled={busy}>
               {busy ? t.identity.sending : t.identity.sendCode}
@@ -75,10 +117,12 @@ export function IdentityGate({ onAuthed }: { onAuthed?: () => void }) {
         </form>
       ) : (
         <form onSubmit={verify}>
-          {devCode && (
+          {devCode ? (
             <p className="notice">
               {t.identity.devCodeNote} <strong>{devCode}</strong>
             </p>
+          ) : (
+            <p className="notice">{t.identity.sentNote}</p>
           )}
           <label htmlFor="code">{t.identity.code}</label>
           <input
