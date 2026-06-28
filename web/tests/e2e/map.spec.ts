@@ -29,6 +29,9 @@ test.describe("Mapa — portal de ayuda", () => {
 
   test("la lista accesible de necesidades sirve de alternativa al mapa", async ({ page }) => {
     await page.goto("/");
+    // En móvil la lista está colapsada por defecto; se abre con su botón (patrón disclosure).
+    const toggle = page.getByRole("button", { name: /Lista de necesidades/ });
+    if (await toggle.count()) await toggle.first().click();
     await expect(
       page.getByRole("region", { name: /Lista de necesidades|Necesidades/ }),
     ).toBeAttached();
