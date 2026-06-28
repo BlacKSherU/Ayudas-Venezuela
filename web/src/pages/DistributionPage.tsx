@@ -55,38 +55,42 @@ export function DistributionPage() {
   ];
 
   return (
-    <div className="container">
+    <div className="container wide">
       <h2>Distribución de insumos</h2>
       <p className="muted">Vista pública: oferta disponible vs demanda, y dónde hace más falta.</p>
 
-      <h3 style={{ fontSize: "1rem" }}>Por producto</h3>
-      <DataTable<ProductRow>
-        columns={productColumns}
-        data={(dist?.byProduct ?? []) as ProductRow[]}
-        getRowId={(b) => b.product.id}
-        searchKeys={["product.name"]}
-        searchPlaceholder="Buscar producto…"
-        isLoading={!dist && !error}
-        isError={error}
-        onRetry={() => api.distribution().then(setDist).catch(() => setError(true))}
-        emptyText="Aún no hay datos"
-        defaultPageSize={10}
-      />
+      <div className="dist-grid">
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>Por producto</h3>
+          <DataTable<ProductRow>
+            columns={productColumns}
+            data={(dist?.byProduct ?? []) as ProductRow[]}
+            getRowId={(b) => b.product.id}
+            searchKeys={["product.name"]}
+            searchPlaceholder="Buscar producto…"
+            isLoading={!dist && !error}
+            isError={error}
+            onRetry={() => api.distribution().then(setDist).catch(() => setError(true))}
+            emptyText="Aún no hay datos"
+            defaultPageSize={10}
+          />
+        </section>
 
-      <h3 style={{ fontSize: "1rem", marginTop: "1.5rem" }}>
-        A dónde distribuir (mayor demanda no cubierta)
-      </h3>
-      <DataTable<RegionRow>
-        columns={regionColumns}
-        data={(dist?.unmetByRegion ?? []) as RegionRow[]}
-        getRowId={(r) => r.regionCode}
-        searchKeys={["regionCode"]}
-        searchPlaceholder="Buscar región…"
-        isLoading={!dist && !error}
-        isError={error}
-        emptyText="Sin necesidades pendientes"
-        defaultPageSize={10}
-      />
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>A dónde distribuir (mayor demanda no cubierta)</h3>
+          <DataTable<RegionRow>
+            columns={regionColumns}
+            data={(dist?.unmetByRegion ?? []) as RegionRow[]}
+            getRowId={(r) => r.regionCode}
+            searchKeys={["regionCode"]}
+            searchPlaceholder="Buscar región…"
+            isLoading={!dist && !error}
+            isError={error}
+            emptyText="Sin necesidades pendientes"
+            defaultPageSize={10}
+          />
+        </section>
+      </div>
     </div>
   );
 }
