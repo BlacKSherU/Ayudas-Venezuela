@@ -250,7 +250,7 @@ function OrderFlow({
       )}
 
       {order.status === "entregada" && (
-        <p className="notice">¡Entrega completada! Gracias por tu ayuda. 🙌</p>
+        <p className="notice">¡Entrega completada! Gracias por tu ayuda.</p>
       )}
 
       {error && (

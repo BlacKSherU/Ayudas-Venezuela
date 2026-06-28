@@ -27,7 +27,7 @@ export function Filters({
           <option value="">{t.map.all}</option>
           {categories.map((c) => (
             <option key={c.code} value={c.code}>
-              {c.icon} {c.labelEs}
+              {c.labelEs}
             </option>
           ))}
         </select>

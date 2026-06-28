@@ -19,41 +19,40 @@ declare global {
   }
 }
 
-function enqueue(fn: (os: OneSignalApi) => void | Promise<void>): void {
+// Envuelve cada operación en try/catch: si OneSignal aún no está configurado para el dominio
+// (p. ej. falta el Site URL en el panel), los fallos no rompen la app ni ensucian la consola
+// con errores no capturados; el push simplemente no se activa hasta completar la config.
+function enqueue(fn: (os: OneSignalApi) => Promise<void>): void {
   window.OneSignalDeferred = window.OneSignalDeferred || [];
-  window.OneSignalDeferred.push(fn);
+  window.OneSignalDeferred.push(async (OneSignal) => {
+    try {
+      await fn(OneSignal);
+    } catch {
+      /* OneSignal no configurado / sin permiso: ignorar de forma segura */
+    }
+  });
 }
 
 /** Inicializa OneSignal una vez (llamado al arrancar la app). */
 export function initPush(): void {
-  enqueue(async (OneSignal) => {
-    await OneSignal.init({ appId: APP_ID, allowLocalhostAsSecureOrigin: true });
-  });
+  enqueue((OneSignal) => OneSignal.init({ appId: APP_ID, allowLocalhostAsSecureOrigin: true }));
 }
 
 /** Asocia la suscripción push a la identidad ligera (external_id) tras iniciar sesión. */
 export function pushLogin(identityId: string): void {
-  enqueue(async (OneSignal) => {
-    await OneSignal.login(identityId);
-  });
+  enqueue((OneSignal) => OneSignal.login(identityId));
 }
 
 export function pushLogout(): void {
-  enqueue(async (OneSignal) => {
-    await OneSignal.logout();
-  });
+  enqueue((OneSignal) => OneSignal.logout());
 }
 
 /** Marca/limpia el interés en un rol (segmenta los envíos: donante/transportista/necesitado). */
 export function setRoleTag(role: "donor" | "transportista" | "necesitado", on: boolean): void {
-  enqueue(async (OneSignal) => {
-    await OneSignal.User.addTag(`role_${role}`, on ? "true" : "false");
-  });
+  enqueue((OneSignal) => OneSignal.User.addTag(`role_${role}`, on ? "true" : "false"));
 }
 
-/** Pide permiso de notificaciones al usuario (tras una interacción). */
+/** Pide permiso de notificaciones al usuario (debe llamarse tras una interacción explícita). */
 export function requestPushPermission(): void {
-  enqueue(async (OneSignal) => {
-    await OneSignal.Notifications.requestPermission();
-  });
+  enqueue((OneSignal) => OneSignal.Notifications.requestPermission());
 }

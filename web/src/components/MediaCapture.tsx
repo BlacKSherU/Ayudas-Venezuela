@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from "react";
+import { Camera } from "lucide-react";
 
 const PHOTO_MAX = 5 * 1024 * 1024;
 const VIDEO_MAX = 25 * 1024 * 1024;
@@ -38,8 +39,13 @@ export function MediaCapture({
 
   return (
     <div>
-      <button type="button" className="btn secondary" onClick={() => inputRef.current?.click()}>
-        📷 {label}
+      <button
+        type="button"
+        className="btn secondary"
+        style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
+        onClick={() => inputRef.current?.click()}
+      >
+        <Camera size={18} aria-hidden="true" /> {label}
       </button>
       <input
         ref={inputRef}

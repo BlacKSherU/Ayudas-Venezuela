@@ -176,12 +176,18 @@ export async function getSessionIdentity(c: Context<{ Bindings: Env }>): Promise
   return verifySessionToken(c.env, token);
 }
 
-/** Fija la cookie de sesión (HttpOnly, Secure, SameSite=None para front en otro origen). */
+/**
+ * Fija la cookie de sesión. En producción usa SameSite=None + Secure + **Partitioned** (CHIPS)
+ * para que funcione cuando el frontend (p. ej. unionvzla.com) y la API (workers.dev) están en
+ * dominios distintos, sin que el navegador la rechace como cookie de terceros.
+ */
 export function setSessionCookie(c: Context<{ Bindings: Env }>, token: string): void {
+  const prod = c.env.ENVIRONMENT !== "development";
   setCookie(c, SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: c.env.ENVIRONMENT !== "development",
-    sameSite: c.env.ENVIRONMENT === "development" ? "Lax" : "None",
+    secure: prod,
+    sameSite: prod ? "None" : "Lax",
+    partitioned: prod,
     path: "/",
     maxAge: SESSION_TTL_SEC,
   });
@@ -189,10 +195,12 @@ export function setSessionCookie(c: Context<{ Bindings: Env }>, token: string): 
 
 /** Borra la cookie de sesión. */
 export function clearSessionCookie(c: Context<{ Bindings: Env }>): void {
+  const prod = c.env.ENVIRONMENT !== "development";
   setCookie(c, SESSION_COOKIE, "", {
     httpOnly: true,
-    secure: c.env.ENVIRONMENT !== "development",
-    sameSite: c.env.ENVIRONMENT === "development" ? "Lax" : "None",
+    secure: prod,
+    sameSite: prod ? "None" : "Lax",
+    partitioned: prod,
     path: "/",
     maxAge: 0,
   });

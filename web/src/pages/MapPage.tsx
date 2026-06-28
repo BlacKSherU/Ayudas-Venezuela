@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { createMapEngine, type MapEngine } from "../components/map/MapEngine";
 import { Filters, type FilterValue } from "../components/Filters";
 import { NeedList } from "../components/NeedList";
@@ -139,8 +140,8 @@ export function MapPage() {
       )}
       <NeedList needs={needs} />
       {delivered !== null && delivered > 0 && (
-        <p className="impact">
-          ✅ {delivered} {t.common.deliveredCount}
+        <p className="impact" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+          <CheckCircle2 size={16} aria-hidden="true" /> {delivered} {t.common.deliveredCount}
         </p>
       )}
     </>

@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useSession, useCategories } from "../App";
 import { IdentityGate } from "../components/IdentityGate";
 import { MapPicker } from "../components/MapPicker";
+import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Need } from "../lib/types";
 
@@ -60,7 +61,9 @@ export function DonatePage() {
     return (
       <div className="container">
         <div className="notice">
-          <h2>¡Orden publicada! 🚚</h2>
+          <h2 style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <Truck size={20} aria-hidden="true" /> ¡Orden publicada!
+          </h2>
           <p>Un transportista podrá recogerla. Guarda tu código de recogida:</p>
           <p style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "2px" }}>
             {codes.pickupCode}

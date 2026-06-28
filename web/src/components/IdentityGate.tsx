@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Mail, MessageCircle } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import { useSession } from "../App";
 import { t } from "../i18n";
@@ -65,18 +66,20 @@ export function IdentityGate({ onAuthed }: { onAuthed?: () => void }) {
             <button
               type="button"
               className="chip"
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
               aria-pressed={channel === "email"}
               onClick={() => setChannel("email")}
             >
-              ✉️ {t.identity.byEmail}
+              <Mail size={16} aria-hidden="true" /> {t.identity.byEmail}
             </button>
             <button
               type="button"
               className="chip"
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
               aria-pressed={channel === "phone"}
               onClick={() => setChannel("phone")}
             >
-              💬 {t.identity.byWhatsapp}
+              <MessageCircle size={16} aria-hidden="true" /> {t.identity.byWhatsapp}
             </button>
           </div>
 

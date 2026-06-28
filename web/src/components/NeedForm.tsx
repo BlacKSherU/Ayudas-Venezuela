@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
 import { useCategories } from "../App";
 import { MapPicker } from "./MapPicker";
+import { CategoryIcon } from "../lib/icons";
 import { t } from "../i18n";
 import type { Urgency } from "../lib/types";
 
@@ -95,10 +96,11 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
               type="button"
               key={cat.code}
               className="chip"
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
               aria-pressed={selected.has(cat.code)}
               onClick={() => toggle(cat.code)}
             >
-              {cat.icon} {cat.labelEs}
+              <CategoryIcon code={cat.code} /> {cat.labelEs}
             </button>
           ))}
         </div>
