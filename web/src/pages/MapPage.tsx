@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Search, MapPin, Warehouse, Users } from "lucide-react";
+import { CheckCircle2, Search, MapPin, Warehouse, Users, ChevronDown, ListChecks } from "lucide-react";
 import { createMapEngine, type MapEngine } from "../components/map/MapEngine";
 import { Filters, type FilterValue } from "../components/Filters";
 import { NeedList } from "../components/NeedList";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { useIsMobile } from "../hooks/useIsMobile";
 import { useRealtime } from "../hooks/useRealtime";
 import { useCategories } from "../App";
 import { api } from "../lib/api";
@@ -31,6 +32,9 @@ export function MapPage() {
   // Capas del mapa (qué mostrar).
   const [showNeeds, setShowNeeds] = useState(true);
   const [showCenters, setShowCenters] = useState(true);
+  // Móvil: lista colapsable bajo los filtros, colapsada por defecto.
+  const [listOpen, setListOpen] = useState(false);
+  const isMobile = useIsMobile();
   const geo = useGeolocation();
 
   const label = (code: string) => categories.find((c) => c.code === code)?.labelEs ?? code;
@@ -217,22 +221,44 @@ export function MapPage() {
         {geoDegraded && <p className="muted map-geo-note">{t.map.noGeo}</p>}
       </div>
 
+      {/* Lista de necesidades. En PC: sidebar con scroll. En móvil: bajo los filtros, encima
+          del mapa, colapsable y colapsada por defecto. */}
+      <div className="map-list">
+        {isMobile && (
+          <button
+            type="button"
+            className="map-list-toggle"
+            aria-expanded={listOpen}
+            onClick={() => setListOpen((v) => !v)}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+              <ListChecks size={16} aria-hidden="true" /> Lista de necesidades ({listNeeds.length})
+            </span>
+            <ChevronDown
+              size={18}
+              aria-hidden="true"
+              style={{ transform: listOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+            />
+          </button>
+        )}
+        {(!isMobile || listOpen) && (
+          <div className="map-list-body">
+            <NeedList needs={listNeeds} embedded />
+            {delivered !== null && delivered > 0 && (
+              <p className="impact" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                <CheckCircle2 size={16} aria-hidden="true" /> {delivered} {t.common.deliveredCount}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Mapa */}
       <div className="map-canvas">
         <div id="map" ref={mapRef} role="application" aria-label={t.map.title} />
         <div className={`map-status ${online ? "live" : "offline"}`} role="status">
           {online ? `● ${t.map.live}` : t.map.offline}
         </div>
-      </div>
-
-      {/* Lista de necesidades (scroll interno en PC) */}
-      <div className="map-list">
-        <NeedList needs={listNeeds} embedded />
-        {delivered !== null && delivered > 0 && (
-          <p className="impact" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-            <CheckCircle2 size={16} aria-hidden="true" /> {delivered} {t.common.deliveredCount}
-          </p>
-        )}
       </div>
     </div>
   );

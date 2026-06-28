@@ -18,7 +18,6 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
   const [productCat, setProductCat] = useState("");
   const [note, setNote] = useState("");
   const [contact, setContact] = useState("");
-  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -54,7 +53,7 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
         ],
         note: note.trim() || null,
         contactPublic: contact.trim() || null,
-        contactPublicConsent: consent,
+        contactPublicConsent: true,
       });
       setDone(true);
       onPublished?.();
@@ -72,6 +71,11 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
       </div>
     );
   }
+
+  // Productos específicos: se buscan dentro de las categorías ya marcadas en las pills.
+  const selectedCats = categories.filter((c) => selected.has(c.code));
+  const effectiveProductCat =
+    productCat && selected.has(productCat) ? productCat : (selectedCats[0]?.code ?? "");
 
   const ubicacion = (
     <>
@@ -114,25 +118,32 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
 
       <fieldset style={{ border: "none", padding: 0, margin: "0.75rem 0 0" }}>
         <legend style={{ fontWeight: 600 }}>Productos específicos (opcional)</legend>
-        <select
-          value={productCat}
-          onChange={(e) => setProductCat(e.target.value)}
-          aria-label="Categoría del producto"
-        >
-          <option value="">Elige categoría para buscar…</option>
-          {categories.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.labelEs}
-            </option>
-          ))}
-        </select>
-        {productCat && (
-          <div style={{ marginTop: "0.5rem" }}>
-            <ProductPicker
-              categoryCode={productCat}
-              onPick={(p) => setProducts((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]))}
-            />
-          </div>
+        {selected.size === 0 ? (
+          <p className="muted" style={{ margin: 0 }}>
+            Elige arriba al menos un tipo de insumo para buscar productos específicos.
+          </p>
+        ) : (
+          <>
+            {selectedCats.length > 1 && (
+              <select
+                value={effectiveProductCat}
+                onChange={(e) => setProductCat(e.target.value)}
+                aria-label="Buscar productos de la categoría"
+              >
+                {selectedCats.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    Productos de {c.labelEs}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div style={{ marginTop: selectedCats.length > 1 ? "0.5rem" : 0 }}>
+              <ProductPicker
+                categoryCode={effectiveProductCat}
+                onPick={(p) => setProducts((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]))}
+              />
+            </div>
+          </>
         )}
         {products.length > 0 && (
           <div className="chips" style={{ marginTop: "0.5rem" }}>
@@ -174,18 +185,9 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
         onChange={(e) => setContact(e.target.value)}
       />
       {contact.trim() && (
-        <div className="warning" style={{ marginTop: "0.5rem" }}>
-          <p style={{ margin: "0 0 0.5rem" }}>{t.form.contactWarning}</p>
-          <label style={{ display: "flex", gap: "0.5rem", fontWeight: 400 }}>
-            <input
-              type="checkbox"
-              style={{ width: "auto", minHeight: "auto" }}
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-            />
-            {t.form.contactConsent}
-          </label>
-        </div>
+        <p className="muted" style={{ marginTop: "0.4rem" }}>
+          Este contacto será público en el mapa.
+        </p>
       )}
 
       {error && (
