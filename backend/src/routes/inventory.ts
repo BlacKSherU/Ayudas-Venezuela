@@ -8,6 +8,7 @@ import { DECREASE_REASONS } from "../domain/ledger";
 import {
   getBalance,
   getBalancesByOwner,
+  getGlobalLedger,
   getLedgerByOwner,
   getOrCreateInventory,
   getProductById,
@@ -104,6 +105,14 @@ inventoryRoutes.post("/items/:productId/decrease", async (c) => {
   } catch (err) {
     return sendError(c, err);
   }
+});
+
+// GET /inventory/ledger/global — feed público global de movimientos (Transparencia, feature 4).
+// Debe ir ANTES de "/:ref/ledger" para no colisionar con el parámetro.
+inventoryRoutes.get("/ledger/global", async (c) => {
+  const limit = Math.min(Number(c.req.query("limit")) || 100, 500);
+  const movements = await getGlobalLedger(c.env, { limit });
+  return c.json({ movements });
 });
 
 // GET /inventory/:ref/ledger — libro de movimientos público (US3).

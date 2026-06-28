@@ -2,6 +2,7 @@ import type {
   Bbox,
   Category,
   Center,
+  GlobalMovement,
   InventoryBalance,
   LedgerMovement,
   MyCenter,
@@ -171,6 +172,9 @@ export const api = {
     request<{ owner: { publicName: string }; balances: InventoryBalance[] }>(`/inventory/${ref}`),
   getLedger: (ref: string) =>
     request<{ owner: { publicName: string }; movements: LedgerMovement[] }>(`/inventory/${ref}/ledger`),
+  /** Feed público global de movimientos (Transparencia, feature 4). */
+  globalLedger: (limit = 100) =>
+    request<{ movements: GlobalMovement[] }>(`/inventory/ledger/global?limit=${limit}`),
   setPublicName: (publicName: string | null) =>
     request<{ publicName: string | null }>("/identity/public-name", {
       method: "PATCH",

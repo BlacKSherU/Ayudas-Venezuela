@@ -376,3 +376,65 @@ export async function getLedgerByOwner(
   }
   return out;
 }
+
+/** Feed público GLOBAL: movimientos recientes de TODOS los inventarios (Transparencia). */
+export async function getGlobalLedger(env: Env, opts: { limit: number }) {
+  const { results } = await env.DB.prepare(
+    `SELECT m.id, m.type, m.direction, m.qty_base, m.declared_unit, m.declared_qty, m.reason,
+            m.order_id, m.at, p.name AS product_name,
+            inv.owner_identity_id AS owner_identity,
+            cinv.owner_identity_id AS counterparty_owner
+     FROM inventory_movement m
+     JOIN inventory inv ON inv.id = m.inventory_id
+     JOIN product p ON p.id = m.product_id
+     LEFT JOIN inventory cinv ON cinv.id = m.counterparty_inventory_id
+     ORDER BY m.at DESC, m.id DESC
+     LIMIT ?`,
+  )
+    .bind(opts.limit)
+    .all<{
+      id: string;
+      type: string;
+      direction: string;
+      qty_base: number;
+      declared_unit: string;
+      declared_qty: number;
+      reason: string | null;
+      order_id: string | null;
+      at: number;
+      product_name: string;
+      owner_identity: string;
+      counterparty_owner: string | null;
+    }>();
+
+  // Cache de nombres públicos para no repetir consultas por dueño/contraparte.
+  const nameCache = new Map<string, string>();
+  const nameOf = async (id: string) => {
+    const hit = nameCache.get(id);
+    if (hit) return hit;
+    const name = await getPublicName(env, id);
+    nameCache.set(id, name);
+    return name;
+  };
+
+  const out = [];
+  for (const r of results) {
+    out.push({
+      id: r.id,
+      type: r.type,
+      direction: r.direction,
+      qtyBase: r.qty_base,
+      declaredUnit: r.declared_unit,
+      declaredQty: r.declared_qty,
+      reason: r.reason,
+      orderId: r.order_id,
+      at: r.at,
+      product: { name: r.product_name },
+      owner: { publicName: await nameOf(r.owner_identity), ref: r.owner_identity },
+      counterparty: r.counterparty_owner
+        ? { publicName: await nameOf(r.counterparty_owner), ref: r.counterparty_owner }
+        : null,
+    });
+  }
+  return out;
+}

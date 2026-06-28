@@ -119,6 +119,11 @@ export interface LedgerMovement {
   counterparty: { publicName: string; ref: string } | null;
 }
 
+/** Movimiento del feed público global (Transparencia): incluye el dueño del inventario. */
+export interface GlobalMovement extends LedgerMovement {
+  owner: { publicName: string; ref: string };
+}
+
 export const UNITS_BY_DIMENSION: Record<string, string[]> = {
   masa: ["gramo", "kg"],
   volumen: ["mililitro", "litro"],
