@@ -21,15 +21,19 @@ export { WhatsAppQueue } from "./do/whatsapp-queue";
 
 const app = new Hono<{ Bindings: Env }>();
 
-// CORS restringido al origen del frontend (Pages), con credenciales para la cookie de sesión.
-app.use("/api/*", (c, next) =>
-  cors({
-    origin: c.env.ALLOWED_ORIGIN,
+// CORS restringido a los orígenes permitidos (Pages + dominio(s) propio(s)), con credenciales.
+// ALLOWED_ORIGIN admite una lista separada por comas.
+app.use("/api/*", (c, next) => {
+  const allowed = c.env.ALLOWED_ORIGIN.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return cors({
+    origin: (origin) => (origin && allowed.includes(origin) ? origin : (allowed[0] ?? "")),
     credentials: true,
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type"],
-  })(c, next),
-);
+  })(c, next);
+});
 
 app.get("/api/v1/health", (c) => c.json({ ok: true }));
 
