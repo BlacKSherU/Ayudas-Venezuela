@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useSession, useCategories } from "../App";
 import { LoginPrompt } from "../components/LoginPrompt";
 import { MapPicker } from "../components/MapPicker";
+import { NeedLocationMap } from "../components/NeedLocationMap";
 import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
@@ -128,6 +129,13 @@ export function DonatePage() {
           <p>
             Donación para: <strong>{selected.items.map((i) => label(i.categoryCode)).join(", ")}</strong>
           </p>
+          {selected.note && <p className="muted">{selected.note}</p>}
+          <NeedLocationMap need={selected} />
+          {selected.contactPublic && (
+            <p>
+              Contacto de la persona: <strong>{selected.contactPublic}</strong>
+            </p>
+          )}
           <div className="chips" role="group" aria-label="Cómo entregar">
             <button type="button" className="chip" aria-pressed={mode === "order"} onClick={() => setMode("order")}>
               Que un transportista la lleve
