@@ -4,6 +4,8 @@ import type { Env } from "../types";
 import { hmacHex, sha256Hex, timingSafeEqual } from "./crypto";
 import { newId } from "./ids";
 import { logEvent } from "./audit";
+import { sendOtpEmail, smtpConfigured } from "./email";
+import { AppError } from "./responses";
 
 const OTP_TTL_SEC = 600; // 10 minutos
 const SESSION_TTL_SEC = 30 * 24 * 60 * 60; // 30 días
@@ -62,11 +64,21 @@ export async function requestCode(
   };
 }
 
-/** Entrega el código por el canal correspondiente. MVP: correo (o log en desarrollo). */
-async function deliverCode(env: Env, channel: Channel, _contact: string, code: string): Promise<void> {
-  // En una integración real se usaría el binding de Cloudflare Email (send_email) para
-  // `channel === "email"` o un proveedor de SMS para `phone`. En el MVP registramos el
-  // envío sin exponer el contacto en el log.
+/**
+ * Entrega el código por el canal correspondiente. Si hay SMTP configurado, envía el correo;
+ * en caso contrario solo registra (en desarrollo el código viaja como devCode en la API).
+ */
+async function deliverCode(env: Env, channel: Channel, contact: string, code: string): Promise<void> {
+  if (channel === "email" && smtpConfigured(env)) {
+    try {
+      await sendOtpEmail(env, contact, code);
+      return;
+    } catch (err) {
+      logEvent("otp.email_error", { message: String(err) });
+      throw new AppError("EMAIL_FAILED", "No se pudo enviar el código por correo", 502);
+    }
+  }
+  // Sin SMTP configurado: registramos el envío sin exponer el contacto.
   logEvent("otp.delivered", { channel, dev: env.ENVIRONMENT === "development" ? code : undefined });
 }
 

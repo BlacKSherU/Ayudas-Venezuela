@@ -10,6 +10,13 @@ export interface Env {
   EMAIL_FROM: string;
   /** Secreto para firmar cookies de sesión. Definir con `wrangler secret put SESSION_SECRET`. */
   SESSION_SECRET?: string;
+  /** Configuración SMTP para enviar el OTP (definir como secrets). */
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  /** Tipo de autenticación SMTP: "login" (def.) | "plain" | "cram-md5". */
+  SMTP_AUTH?: string;
 }
 
 export type NeedStatus = "pendiente" | "comprometida" | "entregada" | "expirada";
