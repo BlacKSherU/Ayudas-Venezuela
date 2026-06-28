@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowUp,
   ArrowDown,
@@ -72,59 +73,98 @@ function getNested(obj: unknown, path: string): unknown {
     .reduce<unknown>((o, k) => (o as Record<string, unknown> | null | undefined)?.[k], obj);
 }
 
-/** Menú de acciones por fila (kebab) con cierre al hacer clic fuera o Esc. */
+/**
+ * Menú de acciones por fila (kebab). El desplegable FLOTA en un portal con posición fija
+ * (calculada desde el botón) para que no lo recorte el contenedor con scroll de la tabla.
+ */
 function ActionsMenu<T>({ item, actions }: { item: T; actions: ActionDef<T>[] }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  const POP_WIDTH = 190;
+
+  function place() {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const estH = actions.length * 44 + 10;
+    let top = r.bottom + 4;
+    if (top + estH > window.innerHeight - 8) top = Math.max(8, r.top - estH - 4);
+    let left = r.right - POP_WIDTH;
+    if (left < 8) left = 8;
+    setPos({ top, left });
+  }
+
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (btnRef.current?.contains(t) || popRef.current?.contains(t)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onMove = () => setOpen(false); // al hacer scroll/resize, cierra (la posición fija se desalinea)
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
     };
   }, [open]);
 
   if (actions.length === 0) return null;
   return (
-    <div className="actions-menu" ref={ref}>
+    <>
       <button
-        className="icon-btn"
+        ref={btnRef}
+        className="icon-btn kebab"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Acciones"
         onClick={(e) => {
           e.stopPropagation();
-          setOpen((v) => !v);
+          if (open) {
+            setOpen(false);
+          } else {
+            place();
+            setOpen(true);
+          }
         }}
       >
         <MoreHorizontal size={18} aria-hidden="true" />
       </button>
-      {open && (
-        <div className="actions-pop" role="menu">
-          {actions.map((a, i) => (
-            <button
-              key={i}
-              role="menuitem"
-              className={`actions-item${a.variant === "destructive" ? " destructive" : ""}${a.separator ? " sep" : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-                a.onClick(item);
-              }}
-            >
-              {a.icon && <span className="actions-icon">{a.icon}</span>}
-              {a.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {open &&
+        createPortal(
+          <div
+            ref={popRef}
+            className="actions-pop"
+            role="menu"
+            style={{ position: "fixed", top: pos.top, left: pos.left, width: POP_WIDTH }}
+          >
+            {actions.map((a, i) => (
+              <button
+                key={i}
+                role="menuitem"
+                className={`actions-item${a.variant === "destructive" ? " destructive" : ""}${a.separator ? " sep" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  a.onClick(item);
+                }}
+              >
+                {a.icon && <span className="actions-icon">{a.icon}</span>}
+                {a.label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
@@ -195,8 +235,9 @@ export function DataTable<T extends Record<string, unknown>>({
         ))}
       </div>
 
-      {/* Móvil: tarjetas si se proveen */}
-      {isMobile && mobileCard ? (
+      {/* Móvil: SIEMPRE tarjetas (la mobileCard provista o una por defecto), nunca tabla con
+          scroll horizontal apretado. */}
+      {isMobile ? (
         <div className="dt-cards">
           {isError ? (
             <ErrorState onRetry={onRetry} />
@@ -211,7 +252,22 @@ export function DataTable<T extends Record<string, unknown>>({
                 key={getRowId(item)}
                 onClick={onRowClick ? () => onRowClick(item) : undefined}
               >
-                <div className="dt-card-body">{mobileCard(item)}</div>
+                <div className="dt-card-body">
+                  {mobileCard ? (
+                    mobileCard(item)
+                  ) : (
+                    <div className="dt-card-fields">
+                      {columns.map((col) => (
+                        <div className="dt-card-field" key={col.key}>
+                          <span className="dt-card-label">{col.label}</span>
+                          <span>
+                            {col.render ? col.render(item) : (getNested(item, col.key) as ReactNode)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {hasActions && <ActionsMenu item={item} actions={actions!(item)} />}
               </div>
             ))

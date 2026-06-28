@@ -520,9 +520,9 @@ nav.section-nav {
 .icon-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .icon-btn:hover:not(:disabled) { background: #f0f0ec; }
 
-.actions-menu { position: relative; display: inline-block; }
-.actions-menu .icon-btn { border-color: transparent; }
-.actions-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 50; min-width: 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.14); padding: 0.25rem; }
+.icon-btn.kebab { border-color: transparent; }
+/* Menú de acciones: flota en portal con posición fija (no lo recorta el scroll de la tabla). */
+.actions-pop { position: fixed; z-index: 1000; min-width: 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.22); padding: 0.25rem; }
 .actions-item { display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left; padding: 0.5rem 0.6rem; border: none; background: none; border-radius: 7px; cursor: pointer; font-size: 0.88rem; color: var(--text); min-height: 40px; }
 .actions-item:hover { background: #f0f0ec; }
 .actions-item.destructive { color: var(--red); }
@@ -638,3 +638,8 @@ nav.section-nav {
 /* En escritorio, separar visualmente los pasos del formulario de una página. */
 .stepper-section + .stepper-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .stepper-section-title { font-size: 0.95rem; margin: 0 0 0.5rem; }
+
+/* Tarjeta por defecto de DataTable en móvil (etiqueta: valor). */
+.dt-card-fields { display: flex; flex-direction: column; gap: 0.35rem; }
+.dt-card-field { display: flex; flex-direction: column; gap: 0.1rem; }
+.dt-card-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
