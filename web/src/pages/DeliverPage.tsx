@@ -4,8 +4,8 @@ import { api, ApiError } from "../lib/api";
 import { useCategories } from "../App";
 import { MediaCapture } from "../components/MediaCapture";
 import { DataTable, type ColumnDef } from "../components/table/DataTable";
+import { OrdersMap } from "../components/OrdersMap";
 import { DetailModal } from "../components/Modal";
-import { useGeolocation } from "../hooks/useGeolocation";
 import { formatDateTime } from "../lib/format";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Order, SupportProfile, SupportRole } from "../lib/types";
@@ -94,7 +94,6 @@ type OrderRow = Order & { itemsText: string } & Record<string, unknown>;
 
 export function OrdersList({ support }: { support: SupportProfile }) {
   const categories = useCategories();
-  const geo = useGeolocation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [fetching, setFetching] = useState(true);
   const [detail, setDetail] = useState<OrderRow | null>(null);
@@ -106,23 +105,17 @@ export function OrdersList({ support }: { support: SupportProfile }) {
   const label = (code: string) => categories.find((c) => c.code === code)?.labelEs ?? code;
 
   const refresh = useCallback(async () => {
-    const d = 0.5;
-    const { lat, lng } = geo.center;
     setFetching(true);
     try {
-      const r = await api.listOrders({
-        minLng: lng - d,
-        minLat: lat - d,
-        maxLng: lng + d,
-        maxLat: lat + d,
-      });
+      // Emergencia nacional: el voluntario ve todas las órdenes disponibles y elige en el mapa.
+      const r = await api.listOrders({ minLng: -73.4, minLat: 0.6, maxLng: -59.8, maxLat: 12.3 });
       setOrders(r.orders);
     } catch {
       setOrders([]);
     } finally {
       setFetching(false);
     }
-  }, [geo.center]);
+  }, []);
 
   useEffect(() => {
     void refresh();
@@ -160,11 +153,20 @@ export function OrdersList({ support }: { support: SupportProfile }) {
   ];
 
   return (
-    <div className="container">
+    <div className="container wide">
       <h2>Órdenes disponibles</h2>
       <p className="muted">
         Reputación: {support.ratingAvg.toFixed(1)}★ · {support.deliveriesDone} entregas
       </p>
+      <p className="muted">Toca un punto en el mapa para ver la orden y tomarla.</p>
+      <OrdersMap
+        orders={orders}
+        labelFor={(o) => o.items.map((i) => label(i.categoryCode)).join(", ")}
+        onSelect={(id) => {
+          const found = rows.find((r) => r.id === id);
+          if (found) setDetail(found);
+        }}
+      />
       <DataTable<OrderRow>
         columns={columns}
         data={rows}

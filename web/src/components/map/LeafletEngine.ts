@@ -1,8 +1,8 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Bbox, Center, Need } from "../../lib/types";
-import type { MapEngine, MapEngineOptions } from "./MapEngine";
-import { needDivIcon, centerDivIcon, pickerDivIcon } from "./markers";
+import type { MapEngine, MapEngineOptions, OrderMarker } from "./MapEngine";
+import { needDivIcon, centerDivIcon, pickerDivIcon, orderDivIcon } from "./markers";
 import { t } from "../../i18n";
 
 /** Implementación del MapEngine con Leaflet + tiles raster de OpenStreetMap. */
@@ -10,16 +10,19 @@ export class LeafletEngine implements MapEngine {
   private map: L.Map | null = null;
   private layer = L.layerGroup();
   private centerLayer = L.layerGroup();
+  private orderLayer = L.layerGroup();
   private markers = new Map<string, L.Marker>();
   private centerMarkers = new Map<string, L.Marker>();
-  private pickerMarker: L.Marker | null = null;
   private onNeedClick?: (need: Need) => void;
   private onCenterClick?: (center: Center) => void;
+  private onOrderClick?: (id: string) => void;
   private onViewportChange?: (bbox: Bbox) => void;
+  private pickerMarker: L.Marker | null = null;
 
   mount(container: HTMLElement, opts: MapEngineOptions): void {
     this.onNeedClick = opts.onNeedClick;
     this.onCenterClick = opts.onCenterClick;
+    this.onOrderClick = opts.onOrderClick;
     this.onViewportChange = opts.onViewportChange;
 
     const map = L.map(container, { zoomControl: true, attributionControl: true }).setView(
@@ -34,6 +37,7 @@ export class LeafletEngine implements MapEngine {
 
     this.layer.addTo(map);
     this.centerLayer.addTo(map);
+    this.orderLayer.addTo(map);
     this.map = map;
 
     let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -127,6 +131,22 @@ export class LeafletEngine implements MapEngine {
     if (marker) {
       this.centerLayer.removeLayer(marker);
       this.centerMarkers.delete(id);
+    }
+  }
+
+  setOrders(orders: OrderMarker[]): void {
+    if (!this.map) return;
+    this.orderLayer.clearLayers();
+    for (const o of orders) {
+      const marker = L.marker([o.lat, o.lng], {
+        icon: orderDivIcon(),
+        title: o.title,
+        alt: `Orden: ${o.title}`,
+        keyboard: true,
+      });
+      marker.bindPopup(`<strong>Orden de entrega</strong><br/>${escapeHtml(o.title)}`);
+      marker.on("click", () => this.onOrderClick?.(o.id));
+      marker.addTo(this.orderLayer);
     }
   }
 

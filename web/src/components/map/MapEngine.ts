@@ -1,11 +1,20 @@
 import type { Bbox, Center, Need } from "../../lib/types";
 
+/** Marcador genérico de una orden de entrega para el mapa. */
+export interface OrderMarker {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+}
+
 export interface MapEngineOptions {
   center: { lat: number; lng: number };
   zoom: number;
   onViewportChange?: (bbox: Bbox) => void;
   onNeedClick?: (need: Need) => void;
   onCenterClick?: (center: Center) => void;
+  onOrderClick?: (id: string) => void;
 }
 
 /**
@@ -28,6 +37,8 @@ export interface MapEngine {
   upsertCenter(center: Center): void;
   /** Quita un centro de acopio del mapa (tiempo real). */
   removeCenter(id: string): void;
+  /** Reemplaza el conjunto de órdenes de entrega mostradas (capa propia). */
+  setOrders(orders: OrderMarker[]): void;
   /** Activa el modo selección de zona; invoca el callback con la coordenada elegida. */
   enablePicker(onPick: (lat: number, lng: number) => void): void;
   /** Coloca/mueve el marcador del selector y centra el mapa (p. ej. "mi ubicación"). */

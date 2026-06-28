@@ -62,6 +62,22 @@ export function centerDivIcon(): L.DivIcon {
   });
 }
 
+// Color de orden de entrega (ámbar), distinto de necesidades y centros.
+const ORDER_COLOR = "#b9770e";
+// Glifo de paquete/caja para las órdenes de entrega.
+const ORDER_GLYPH = '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>';
+
+/** Pin de una orden de entrega disponible (ámbar + caja). */
+export function orderDivIcon(): L.DivIcon {
+  return L.divIcon({
+    className: "map-pin order-pin",
+    html: pinSvg(ORDER_COLOR, ORDER_GLYPH),
+    iconSize: [30, 40],
+    iconAnchor: [15, 39],
+    popupAnchor: [0, -34],
+  });
+}
+
 // Glifo de "marcar punto": una cruz/mira centrada.
 const PICKER_GLYPH = '<path d="M12 2v20"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/>';
 
