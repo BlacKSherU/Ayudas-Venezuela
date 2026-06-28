@@ -1,0 +1,22 @@
+{
+  "name": "ayuda-venezuela",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portal humanitario de coordinación de distribución de insumos tras el terremoto en Venezuela",
+  "license": "MIT",
+  "workspaces": [
+    "backend",
+    "web"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:web": "npm --workspace web run dev",
+    "build": "npm --workspace web run build",
+    "test": "npm --workspace backend run test",
+    "test:e2e": "npm --workspace web run test:e2e",
+    "lint": "npm --workspace backend run lint && npm --workspace web run lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

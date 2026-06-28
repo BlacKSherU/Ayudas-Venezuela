@@ -1,0 +1,50 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ayuda-venezuela",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ENVIRONMENT": "development",
+    // Origen del frontend (Cloudflare Pages) permitido por CORS. Ajustar en producción.
+    "ALLOWED_ORIGIN": "http://localhost:5173",
+    "EMAIL_FROM": "no-reply@ayuda-venezuela.org"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ayuda-venezuela",
+      // Reemplazar con el id real tras `wrangler d1 create ayuda-venezuela`.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CONFIG",
+      // Reemplazar con el id real tras `wrangler kv namespace create CONFIG`.
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MAP_ROOM",
+        "class_name": "MapRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MapRoom"]
+    }
+  ],
+  "triggers": {
+    // Barrido de respaldo: expira necesidades (30 d) y libera compromisos vencidos (12 h).
+    "crons": ["*/30 * * * *"]
+  }
+}
