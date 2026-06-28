@@ -76,7 +76,7 @@ export type OrderStatus =
   | "liberada"
   | "cancelada";
 
-/** Vista pública/listable de una orden de entrega (sin direcciones exactas). */
+/** Vista pública/listable de una orden de entrega. La ubicación de recogida es exacta (v2.0.0). */
 export interface OrderPublic {
   id: string;
   needId: string;
@@ -84,6 +84,7 @@ export interface OrderPublic {
   pickupZone: { lat: number; lng: number };
   regionCode: string;
   items: { categoryCode: string; quantity: string | null }[];
+  donorContact: string | null;
   etaMs: number | null;
   updatedAt: number;
 }

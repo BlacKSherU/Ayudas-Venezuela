@@ -78,6 +78,20 @@ export function orderDivIcon(): L.DivIcon {
   });
 }
 
+// Glifo de bandera para el destino de una ruta.
+const FLAG_GLYPH = '<path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/>';
+
+/** Pin del destino de una entrega (rojo + bandera). */
+export function destinationDivIcon(): L.DivIcon {
+  return L.divIcon({
+    className: "map-pin destination-pin",
+    html: pinSvg("#c0392b", FLAG_GLYPH, true),
+    iconSize: [34, 46],
+    iconAnchor: [17, 45],
+    popupAnchor: [0, -40],
+  });
+}
+
 // Glifo de "marcar punto": una cruz/mira centrada.
 const PICKER_GLYPH = '<path d="M12 2v20"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/>';
 

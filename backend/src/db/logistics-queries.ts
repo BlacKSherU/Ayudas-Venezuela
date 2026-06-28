@@ -113,6 +113,7 @@ export interface OrderRow {
   pickup_code_hash: string;
   dropoff_code_hash: string;
   eta_ms: number | null;
+  donor_contact: string | null;
   created_at: number;
   updated_at: number;
   taken_at: number | null;
@@ -154,6 +155,7 @@ export function toOrderPublic(row: OrderRow, items: OrderItemRow[]): OrderPublic
     pickupZone: { lat: row.pickup_zone_lat, lng: row.pickup_zone_lng },
     regionCode: row.region_code,
     items: items.map((i) => ({ categoryCode: i.category_code, quantity: i.quantity })),
+    donorContact: row.donor_contact,
     etaMs: row.eta_ms,
     updatedAt: row.updated_at,
   };
@@ -180,6 +182,7 @@ export interface CreateOrderInput {
   dropoffCodeHash: string;
   items: { categoryCode: string; quantity: string | null; productId?: string | null }[];
   centerId?: string | null;
+  donorContact?: string | null;
   now: number;
 }
 
@@ -190,8 +193,9 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
       `INSERT INTO delivery_order
          (id, need_id, donor_identity_id, status, pickup_zone_lat, pickup_zone_lng,
           pickup_exact_enc, pickup_exact_iv, dropoff_exact_enc, dropoff_exact_iv,
-          region_code, pickup_code_hash, dropoff_code_hash, center_id, created_at, updated_at)
-       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          region_code, pickup_code_hash, dropoff_code_hash, center_id, donor_contact,
+          created_at, updated_at)
+       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id,
       input.needId,
@@ -206,6 +210,7 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
       input.pickupCodeHash,
       input.dropoffCodeHash,
       input.centerId ?? null,
+      input.donorContact ?? null,
       input.now,
       input.now,
     ),

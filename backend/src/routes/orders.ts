@@ -40,6 +40,8 @@ const createSchema = z.object({
   pickupLocation: z.object({ lat: z.number(), lng: z.number() }).optional(),
   // Feature 4: donar desde un centro de acopio propio (la recogida = ubicación del centro).
   centerId: z.string().nullish(),
+  // Contacto del donante para que el voluntario coordine la recogida (opcional).
+  donorContact: z.string().max(200).nullish(),
 });
 
 // POST /orders — el donante prepara recursos y publica una orden desde una necesidad pendiente.
@@ -48,7 +50,7 @@ ordersRoutes.post("/", async (c) => {
     const donorId = await requireSession(c);
     const parsed = createSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Datos inválidos", 400);
-    const { needId, centerId } = parsed.data;
+    const { needId, centerId, donorContact } = parsed.data;
 
     const need = await getNeedRow(c.env, needId);
     if (!need) throw new AppError("NOT_FOUND", "Necesidad no encontrada", 404);
@@ -105,6 +107,7 @@ ordersRoutes.post("/", async (c) => {
         productId: i.product_id,
       })),
       centerId: centerId ?? null,
+      donorContact: donorContact?.trim() || null,
       now,
     });
 

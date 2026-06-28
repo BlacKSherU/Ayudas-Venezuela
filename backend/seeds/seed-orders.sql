@@ -8,9 +8,12 @@ VALUES ('seed-donor-id', 'email', 'seed-donor-hash', 1782648198000, 178264819800
 
 INSERT OR IGNORE INTO delivery_order
   (id, need_id, donor_identity_id, status, pickup_zone_lat, pickup_zone_lng,
-   region_code, pickup_code_hash, dropoff_code_hash, created_at, updated_at) VALUES
- ('seed-order-01','seed-need-02','seed-donor-id','disponible',10.0400,-69.2850,'LAR','seedhash','seedhash',1782648198000,1782648198000),
- ('seed-order-02','seed-need-05','seed-donor-id','disponible',10.0680,-69.3000,'LAR','seedhash','seedhash',1782648198000,1782648198000);
+   region_code, pickup_code_hash, dropoff_code_hash, donor_contact, created_at, updated_at) VALUES
+ ('seed-order-01','seed-need-02','seed-donor-id','disponible',10.0400,-69.2850,'LAR','seedhash','seedhash','WhatsApp +58 414-1112233',1782648198000,1782648198000),
+ ('seed-order-02','seed-need-05','seed-donor-id','disponible',10.0680,-69.3000,'LAR','seedhash','seedhash','WhatsApp +58 414-1112233',1782648198000,1782648198000);
+
+-- Contacto público de prueba en las necesidades destino (para que el voluntario lo vea).
+UPDATE need SET contact_public='WhatsApp +58 412-9998877' WHERE id IN ('seed-need-02','seed-need-05');
 
 INSERT OR IGNORE INTO order_item (id, order_id, category_code, quantity, product_id) VALUES
  ('seed-oitem-01','seed-order-01','alimentos','para 15 personas',NULL),

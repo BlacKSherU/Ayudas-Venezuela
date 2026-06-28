@@ -20,6 +20,7 @@ export function DonatePage() {
   const [centers, setCenters] = useState<MyCenter[]>([]);
   // Origen de recogida: un centro propio ("centro:<id>") o un punto en el mapa ("punto").
   const [pickupSource, setPickupSource] = useState<string>("punto");
+  const [donorContact, setDonorContact] = useState("");
   const [codes, setCodes] = useState<{ pickupCode: string; dropoffCode: string } | null>(null);
   const [directDone, setDirectDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -68,10 +69,10 @@ export function DonatePage() {
     setBusy(true);
     setError(null);
     try {
-      const input = usingCenter
+      const base = usingCenter
         ? { needId: selected.id, centerId: pickupSource.slice("centro:".length) }
         : { needId: selected.id, pickupLocation: pickup! };
-      const r = await api.createOrder(input);
+      const r = await api.createOrder({ ...base, donorContact: donorContact.trim() || null });
       setCodes({ pickupCode: r.pickupCode, dropoffCode: r.dropoffCode });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo publicar la orden");
@@ -188,6 +189,18 @@ export function DonatePage() {
                   <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
                 </>
               )}
+
+              <label htmlFor="donor-contact" style={{ marginTop: "0.75rem", display: "block" }}>
+                Tu contacto para coordinar la recogida (opcional)
+              </label>
+              <input
+                id="donor-contact"
+                value={donorContact}
+                onChange={(e) => setDonorContact(e.target.value)}
+                placeholder="Ej.: WhatsApp +58…"
+                maxLength={200}
+              />
+              <p className="muted">El voluntario lo verá para coordinar contigo la recogida.</p>
 
               <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
                 <button className="btn secondary" onClick={() => setSelected(null)}>

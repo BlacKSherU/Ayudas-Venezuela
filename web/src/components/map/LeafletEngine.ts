@@ -2,7 +2,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Bbox, Center, Need } from "../../lib/types";
 import type { MapEngine, MapEngineOptions, OrderMarker } from "./MapEngine";
-import { needDivIcon, centerDivIcon, pickerDivIcon, orderDivIcon } from "./markers";
+import { needDivIcon, centerDivIcon, pickerDivIcon, orderDivIcon, destinationDivIcon } from "./markers";
 import { t } from "../../i18n";
 
 /** Implementación del MapEngine con Leaflet + tiles raster de OpenStreetMap. */
@@ -11,11 +11,13 @@ export class LeafletEngine implements MapEngine {
   private layer = L.layerGroup();
   private centerLayer = L.layerGroup();
   private orderLayer = L.layerGroup();
+  private routeLayer = L.layerGroup();
   private markers = new Map<string, L.Marker>();
   private centerMarkers = new Map<string, L.Marker>();
   private onNeedClick?: (need: Need) => void;
   private onCenterClick?: (center: Center) => void;
   private onOrderClick?: (id: string) => void;
+  private onOrderDetails?: (id: string) => void;
   private onViewportChange?: (bbox: Bbox) => void;
   private pickerMarker: L.Marker | null = null;
 
@@ -23,6 +25,7 @@ export class LeafletEngine implements MapEngine {
     this.onNeedClick = opts.onNeedClick;
     this.onCenterClick = opts.onCenterClick;
     this.onOrderClick = opts.onOrderClick;
+    this.onOrderDetails = opts.onOrderDetails;
     this.onViewportChange = opts.onViewportChange;
 
     const map = L.map(container, { zoomControl: true, attributionControl: true }).setView(
@@ -37,6 +40,7 @@ export class LeafletEngine implements MapEngine {
 
     this.layer.addTo(map);
     this.centerLayer.addTo(map);
+    this.routeLayer.addTo(map);
     this.orderLayer.addTo(map);
     this.map = map;
 
@@ -137,6 +141,7 @@ export class LeafletEngine implements MapEngine {
   setOrders(orders: OrderMarker[]): void {
     if (!this.map) return;
     this.orderLayer.clearLayers();
+    this.clearRoute();
     for (const o of orders) {
       const marker = L.marker([o.lat, o.lng], {
         icon: orderDivIcon(),
@@ -144,10 +149,45 @@ export class LeafletEngine implements MapEngine {
         alt: `Orden: ${o.title}`,
         keyboard: true,
       });
-      marker.bindPopup(`<strong>Orden de entrega</strong><br/>${escapeHtml(o.title)}`);
+      // Popup interactivo con botón "Ver más detalles" → abre el modal (onOrderDetails).
+      const el = document.createElement("div");
+      el.innerHTML = `<strong>Orden de entrega</strong><br/>${escapeHtml(o.title)}<br/><span style="color:#5a5a5a;font-size:0.8rem">Origen aquí · ruta al destino dibujada</span><br/>`;
+      const btn = document.createElement("button");
+      btn.className = "leaflet-detail-btn";
+      btn.textContent = "Ver más detalles";
+      btn.addEventListener("click", () => this.onOrderDetails?.(o.id));
+      el.appendChild(btn);
+      marker.bindPopup(el);
+      // Tocar el marcador: dibuja la ruta (origen→destino). El popup se abre solo.
       marker.on("click", () => this.onOrderClick?.(o.id));
       marker.addTo(this.orderLayer);
     }
+  }
+
+  showRoute(from: { lat: number; lng: number }, to: { lat: number; lng: number }): void {
+    if (!this.map) return;
+    this.clearRoute();
+    L.polyline(
+      [
+        [from.lat, from.lng],
+        [to.lat, to.lng],
+      ],
+      { color: "#1d4ed8", weight: 4, opacity: 0.85, dashArray: "8 6" },
+    ).addTo(this.routeLayer);
+    L.marker([to.lat, to.lng], { icon: destinationDivIcon(), alt: "Destino de la entrega" })
+      .bindPopup("<strong>Destino de la entrega</strong>")
+      .addTo(this.routeLayer);
+    this.map.fitBounds(
+      [
+        [from.lat, from.lng],
+        [to.lat, to.lng],
+      ],
+      { padding: [50, 50], maxZoom: 16 },
+    );
+  }
+
+  clearRoute(): void {
+    this.routeLayer.clearLayers();
   }
 
   enablePicker(onPick: (lat: number, lng: number) => void): void {

@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback, type ReactElement } from "react";
-import { Users } from "lucide-react";
 import { api } from "../lib/api";
 import { useSession } from "../App";
 import { LoginPrompt } from "../components/LoginPrompt";
@@ -32,7 +31,6 @@ export function VolunteersSection() {
   const [catalog, setCatalog] = useState<SupportRole[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
-  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     setChecking(true);
@@ -62,69 +60,25 @@ export function VolunteersSection() {
 
   // Sin ningún rol → invitar a registrarse como voluntario.
   if (roles.length === 0) {
-    return (
-      <div>
-        <SectionHeader />
-        <SupportSignup
-          onDone={() => {
-            void load();
-          }}
-        />
-      </div>
-    );
-  }
-
-  // Modo "agregar otro rol".
-  if (adding) {
-    return (
-      <div>
-        <SectionHeader />
-        <div className="container">
-          <button className="btn secondary" onClick={() => setAdding(false)}>
-            ← Volver a mi panel
-          </button>
-        </div>
-        <SupportSignup
-          onDone={() => {
-            setAdding(false);
-            void load();
-          }}
-        />
-      </div>
-    );
+    return <SupportSignup onDone={() => void load()} />;
   }
 
   const activeRole = roles.find((r) => r.roleCode === active) ?? roles[0]!;
 
   return (
     <div>
-      <SectionHeader />
-      <div className="container volunteer-bar">
-        <RoleSwitcher
-          roles={roles}
-          active={activeRole.roleCode}
-          catalog={catalog}
-          onChange={setActive}
-        />
-        <button className="btn secondary add-role-btn" onClick={() => setAdding(true)}>
-          + Agregar otro rol
-        </button>
-      </div>
+      {/* Selector solo cuando hay más de un rol. */}
+      {roles.length > 1 && (
+        <div className="container volunteer-bar">
+          <RoleSwitcher
+            roles={roles}
+            active={activeRole.roleCode}
+            catalog={catalog}
+            onChange={setActive}
+          />
+        </div>
+      )}
       <RoleInterface role={activeRole} />
-    </div>
-  );
-}
-
-function SectionHeader() {
-  return (
-    <div className="container section-header">
-      <h2 className="section-title">
-        <Users size={22} aria-hidden="true" /> Voluntarios
-      </h2>
-      <p className="muted">
-        Repartidores, transportistas y más. Cada rol ve su propia interfaz; si tienes varios,
-        cambia entre ellos con el selector.
-      </p>
     </div>
   );
 }

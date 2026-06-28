@@ -72,6 +72,7 @@ export interface Order {
   pickupZone: { lat: number; lng: number };
   regionCode: string;
   items: NeedItem[];
+  donorContact: string | null;
   etaMs: number | null;
   updatedAt: number;
 }

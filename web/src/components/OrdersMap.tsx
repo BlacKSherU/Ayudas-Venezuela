@@ -1,20 +1,22 @@
 import { useEffect, useRef } from "react";
 import { createMapEngine, type MapEngine } from "./map/MapEngine";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { api } from "../lib/api";
 import type { Order } from "../lib/types";
 
 /**
- * Mapa de órdenes de entrega disponibles para el voluntario (feature 4). Muestra cada orden en
- * su punto de recogida; al tocar un marcador se invoca onSelect(id) para verla/tomarla.
+ * Mapa de órdenes disponibles (feature 4). Al tocar un marcador se dibuja la ruta del punto de
+ * recogida (origen) al destino (ubicación de la necesidad). El popup tiene "Ver más detalles"
+ * que abre el modal (onDetails).
  */
 export function OrdersMap({
   orders,
   labelFor,
-  onSelect,
+  onDetails,
 }: {
   orders: Order[];
   labelFor: (o: Order) => string;
-  onSelect: (id: string) => void;
+  onDetails: (id: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const engineRef = useRef<MapEngine | null>(null);
@@ -23,8 +25,8 @@ export function OrdersMap({
   ordersRef.current = orders;
   const labelRef = useRef(labelFor);
   labelRef.current = labelFor;
-  const selectRef = useRef(onSelect);
-  selectRef.current = onSelect;
+  const detailsRef = useRef(onDetails);
+  detailsRef.current = onDetails;
 
   const sync = () => {
     engineRef.current?.setOrders(
@@ -35,6 +37,18 @@ export function OrdersMap({
         title: labelRef.current(o),
       })),
     );
+  };
+
+  // Tocar una orden: dibuja la ruta origen (recogida) → destino (ubicación de la necesidad).
+  const drawRoute = async (id: string) => {
+    const order = ordersRef.current.find((o) => o.id === id);
+    if (!order) return;
+    try {
+      const need = await api.getNeed(order.needId);
+      engineRef.current?.showRoute(order.pickupZone, need.zone);
+    } catch {
+      /* si falla, no se dibuja la ruta */
+    }
   };
 
   useEffect(() => {
@@ -48,7 +62,8 @@ export function OrdersMap({
       e.mount(ref.current, {
         center: geo.center,
         zoom: geo.zoom,
-        onOrderClick: (id) => selectRef.current(id),
+        onOrderClick: (id) => void drawRoute(id),
+        onOrderDetails: (id) => detailsRef.current(id),
       });
       sync();
     })();
@@ -64,7 +79,6 @@ export function OrdersMap({
     if (geo.status === "ok") engineRef.current?.setView(geo.center.lat, geo.center.lng, 13);
   }, [geo.status, geo.center.lat, geo.center.lng]);
 
-  // Re-sincroniza los marcadores cuando cambian las órdenes.
   useEffect(() => {
     sync();
     // eslint-disable-next-line

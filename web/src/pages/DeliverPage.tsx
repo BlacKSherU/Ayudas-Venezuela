@@ -8,7 +8,7 @@ import { OrdersMap } from "../components/OrdersMap";
 import { DetailModal } from "../components/Modal";
 import { formatDateTime } from "../lib/format";
 import { setRoleTag, requestPushPermission } from "../lib/push";
-import type { Order, SupportProfile, SupportRole } from "../lib/types";
+import type { Need, Order, SupportProfile, SupportRole } from "../lib/types";
 
 // Feature 4: la interfaz de voluntario vive en VolunteersSection. Aquí se exportan las piezas
 // reutilizables (registro y flujo de órdenes) para que la sección las componga por rol.
@@ -97,6 +97,7 @@ export function OrdersList({ support }: { support: SupportProfile }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [fetching, setFetching] = useState(true);
   const [detail, setDetail] = useState<OrderRow | null>(null);
+  const [detailNeed, setDetailNeed] = useState<Need | null>(null);
   const [active, setActive] = useState<{
     order: Order;
     pickupExact: { lat: number; lng: number } | null;
@@ -120,6 +121,15 @@ export function OrdersList({ support }: { support: SupportProfile }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Al abrir el detalle, carga la necesidad (destino + contacto del necesitado).
+  useEffect(() => {
+    if (!detail) {
+      setDetailNeed(null);
+      return;
+    }
+    api.getNeed(detail.needId).then(setDetailNeed).catch(() => setDetailNeed(null));
+  }, [detail]);
 
   if (support.status === "suspendido")
     return (
@@ -162,7 +172,7 @@ export function OrdersList({ support }: { support: SupportProfile }) {
       <OrdersMap
         orders={orders}
         labelFor={(o) => o.items.map((i) => label(i.categoryCode)).join(", ")}
-        onSelect={(id) => {
+        onDetails={(id) => {
           const found = rows.find((r) => r.id === id);
           if (found) setDetail(found);
         }}
@@ -195,6 +205,34 @@ export function OrdersList({ support }: { support: SupportProfile }) {
           detail
             ? [
                 { label: "Insumos", value: detail.itemsText },
+                {
+                  label: "Origen (recogida)",
+                  value: (
+                    <a
+                      href={`https://maps.google.com/?q=${detail.pickupZone.lat},${detail.pickupZone.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Abrir en Maps
+                    </a>
+                  ),
+                },
+                {
+                  label: "Destino (entrega)",
+                  value: detailNeed ? (
+                    <a
+                      href={`https://maps.google.com/?q=${detailNeed.zone.lat},${detailNeed.zone.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Abrir en Maps
+                    </a>
+                  ) : (
+                    "Cargando…"
+                  ),
+                },
+                { label: "Contacto del donante", value: detail.donorContact ?? "—" },
+                { label: "Contacto del necesitado", value: detailNeed?.contactPublic ?? "—" },
                 { label: "Región", value: detail.regionCode },
                 { label: "Estado", value: detail.status },
                 { label: "Actualizada", value: formatDateTime(detail.updatedAt) },
@@ -262,6 +300,11 @@ function OrderFlow({
               abrir mapa de recogida
             </a>
           </p>
+          {order.donorContact && (
+            <p>
+              <strong>Contacto del donante:</strong> {order.donorContact}
+            </p>
+          )}
           <label>Código de recogida (te lo da el donante)</label>
           <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
           <button className="btn" disabled={busy} onClick={() => advance("pickup")}>

@@ -14,7 +14,10 @@ export interface MapEngineOptions {
   onViewportChange?: (bbox: Bbox) => void;
   onNeedClick?: (need: Need) => void;
   onCenterClick?: (center: Center) => void;
+  /** Toque del marcador de una orden (p. ej. dibujar la ruta origen→destino). */
   onOrderClick?: (id: string) => void;
+  /** "Ver más detalles" en el popup de una orden (abre el modal). */
+  onOrderDetails?: (id: string) => void;
 }
 
 /**
@@ -39,6 +42,10 @@ export interface MapEngine {
   removeCenter(id: string): void;
   /** Reemplaza el conjunto de órdenes de entrega mostradas (capa propia). */
   setOrders(orders: OrderMarker[]): void;
+  /** Dibuja la ruta origen→destino (línea + marcador de destino) y ajusta la vista. */
+  showRoute(from: { lat: number; lng: number }, to: { lat: number; lng: number }): void;
+  /** Limpia la ruta dibujada. */
+  clearRoute(): void;
   /** Activa el modo selección de zona; invoca el callback con la coordenada elegida. */
   enablePicker(onPick: (lat: number, lng: number) => void): void;
   /** Coloca/mueve el marcador del selector y centra el mapa (p. ej. "mi ubicación"). */
