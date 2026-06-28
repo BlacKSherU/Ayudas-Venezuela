@@ -4,7 +4,8 @@ import { useSession } from "../App";
 import { LoginPrompt } from "../components/LoginPrompt";
 import { ProductPicker } from "../components/ProductPicker";
 import { QuantityInput } from "../components/QuantityInput";
-import { MOVEMENT_LABEL } from "../lib/movements";
+import { BalancesTable } from "../components/BalancesTable";
+import { MovementsTable } from "../components/MovementsTable";
 import type { InventoryBalance, LedgerMovement, Product } from "../lib/types";
 
 export function InventoryPage() {
@@ -86,36 +87,10 @@ export function InventoryPage() {
       </div>
 
       <h3 style={{ fontSize: "1rem" }}>Saldos</h3>
-      {balances.length === 0 && <p className="muted">Aún no tienes productos.</p>}
-      {balances.map((b) => (
-        <div className="card" key={b.product.id + b.kind} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span>
-            {b.product.name} — <strong>{b.qtyBase}</strong> {b.product.baseUnit}
-            {b.kind === "transito" && <span className="muted"> (en tránsito)</span>}
-          </span>
-          {b.kind === "personal" && (
-            <button className="btn danger" onClick={() => decrease(b)}>Baja</button>
-          )}
-        </div>
-      ))}
+      <BalancesTable balances={balances} onDecrease={decrease} />
 
-      <h3 style={{ fontSize: "1rem" }}>Libro de movimientos</h3>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {movements.map((m) => (
-          <li className="card" key={m.id}>
-            <strong>{MOVEMENT_LABEL[m.type] ?? m.type}</strong> · {m.product.name} ·{" "}
-            {m.direction === "in" ? "+" : "−"}
-            {m.declaredQty} {m.declaredUnit}
-            {m.reason && <span className="muted"> ({m.reason})</span>}
-            {m.counterparty && (
-              <>
-                {" · "}
-                <a href={`#/mapa?view=transparencia&ref=${m.counterparty.ref}`}>{m.counterparty.publicName}</a>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+      <h3 style={{ fontSize: "1rem", marginTop: "1.5rem" }}>Libro de movimientos</h3>
+      <MovementsTable movements={movements} />
     </div>
   );
 }

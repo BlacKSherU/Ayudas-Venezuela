@@ -1,8 +1,12 @@
 import { useEffect, useState, useCallback, type FormEvent } from "react";
+import { Eye, Truck } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import { useCategories } from "../App";
 import { MediaCapture } from "../components/MediaCapture";
+import { DataTable, type ColumnDef } from "../components/table/DataTable";
+import { DetailModal } from "../components/Modal";
 import { useGeolocation } from "../hooks/useGeolocation";
+import { formatDateTime } from "../lib/format";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Order, SupportProfile, SupportRole } from "../lib/types";
 
@@ -86,10 +90,14 @@ export function SupportSignup({ onDone, presetRole }: { onDone: () => void; pres
 
 // --- Listado y flujo de órdenes (US3) --------------------------------------
 
+type OrderRow = Order & { itemsText: string } & Record<string, unknown>;
+
 export function OrdersList({ support }: { support: SupportProfile }) {
   const categories = useCategories();
   const geo = useGeolocation();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [fetching, setFetching] = useState(true);
+  const [detail, setDetail] = useState<OrderRow | null>(null);
   const [active, setActive] = useState<{
     order: Order;
     pickupExact: { lat: number; lng: number } | null;
@@ -100,6 +108,7 @@ export function OrdersList({ support }: { support: SupportProfile }) {
   const refresh = useCallback(async () => {
     const d = 0.5;
     const { lat, lng } = geo.center;
+    setFetching(true);
     try {
       const r = await api.listOrders({
         minLng: lng - d,
@@ -110,6 +119,8 @@ export function OrdersList({ support }: { support: SupportProfile }) {
       setOrders(r.orders);
     } catch {
       setOrders([]);
+    } finally {
+      setFetching(false);
     }
   }, [geo.center]);
 
@@ -126,29 +137,83 @@ export function OrdersList({ support }: { support: SupportProfile }) {
 
   if (active) return <OrderFlow data={active} onClose={() => { setActive(null); void refresh(); }} />;
 
+  const rows: OrderRow[] = orders.map((o) => ({
+    ...o,
+    itemsText: o.items.map((i) => label(i.categoryCode)).join(", "),
+  }));
+
+  async function take(id: string) {
+    const r = await api.takeOrder(id);
+    setActive(r);
+  }
+
+  const columns: ColumnDef<OrderRow>[] = [
+    { key: "itemsText", label: "Insumos", render: (o) => o.itemsText },
+    { key: "regionCode", label: "Región", sortable: true },
+    {
+      key: "updatedAt",
+      label: "Actualizada",
+      sortable: true,
+      hideOnMobile: true,
+      render: (o) => formatDateTime(o.updatedAt),
+    },
+  ];
+
   return (
     <div className="container">
       <h2>Órdenes disponibles</h2>
       <p className="muted">
         Reputación: {support.ratingAvg.toFixed(1)}★ · {support.deliveriesDone} entregas
       </p>
-      {orders.length === 0 && <p className="muted">No hay órdenes cercanas ahora.</p>}
-      {orders.map((o) => (
-        <div className="card" key={o.id}>
-          <strong>{o.items.map((i) => label(i.categoryCode)).join(", ")}</strong>
-          <div className="muted">Zona de recogida aproximada</div>
-          <button
-            className="btn"
-            style={{ marginTop: "0.5rem" }}
-            onClick={async () => {
-              const r = await api.takeOrder(o.id);
-              setActive(r);
-            }}
-          >
-            Tomar esta entrega
-          </button>
-        </div>
-      ))}
+      <DataTable<OrderRow>
+        columns={columns}
+        data={rows}
+        getRowId={(o) => o.id}
+        isLoading={fetching}
+        searchKeys={["itemsText", "regionCode"]}
+        searchPlaceholder="Buscar orden…"
+        emptyText="No hay órdenes cercanas ahora"
+        actions={(o) => [
+          { label: "Tomar entrega", icon: <Truck size={16} aria-hidden="true" />, onClick: () => take(o.id) },
+          { label: "Ver", icon: <Eye size={16} aria-hidden="true" />, separator: true, onClick: () => setDetail(o) },
+        ]}
+        mobileCard={(o) => (
+          <div>
+            <strong>{o.itemsText}</strong>
+            <div className="muted">Región {o.regionCode} · zona de recogida aproximada</div>
+          </div>
+        )}
+      />
+
+      <DetailModal
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        title="Detalle de la orden"
+        fields={
+          detail
+            ? [
+                { label: "Insumos", value: detail.itemsText },
+                { label: "Región", value: detail.regionCode },
+                { label: "Estado", value: detail.status },
+                { label: "Actualizada", value: formatDateTime(detail.updatedAt) },
+              ]
+            : []
+        }
+        footer={
+          detail ? (
+            <button
+              className="btn"
+              onClick={() => {
+                const id = detail.id;
+                setDetail(null);
+                void take(id);
+              }}
+            >
+              <Truck size={16} aria-hidden="true" /> Tomar esta entrega
+            </button>
+          ) : undefined
+        }
+      />
     </div>
   );
 }

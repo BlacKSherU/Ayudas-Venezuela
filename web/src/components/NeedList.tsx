@@ -6,13 +6,13 @@ import type { Need } from "../lib/types";
  * Lista accesible de necesidades. Sirve como alternativa al mapa (sin geolocalización, sin
  * soporte de mapa o con lector de pantalla), cumpliendo la degradación elegante (FR-012).
  */
-export function NeedList({ needs }: { needs: Need[] }) {
+export function NeedList({ needs, embedded }: { needs: Need[]; embedded?: boolean }) {
   const categories = useCategories();
   const label = (code: string) => categories.find((c) => c.code === code)?.labelEs ?? code;
 
   return (
-    <section className="container" aria-label={t.map.listFallback}>
-      <h2 style={{ fontSize: "1rem" }}>{t.map.listFallback}</h2>
+    <section className={embedded ? "need-list" : "container"} aria-label={t.map.listFallback}>
+      {!embedded && <h2 style={{ fontSize: "1rem" }}>{t.map.listFallback}</h2>}
       {needs.length === 0 && <p className="muted">{t.map.empty}</p>}
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {needs.map((n) => (

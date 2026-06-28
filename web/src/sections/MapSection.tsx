@@ -23,7 +23,7 @@ export function MapSection({ view }: { view?: string }) {
   const [tab, setTab] = useState<View>(initial);
 
   return (
-    <div>
+    <div className={tab === "mapa" ? "map-section-fill" : ""}>
       <div className="subnav" role="tablist" aria-label="Vistas del mapa">
         {TABS.map(({ key, label, Icon }) => (
           <button
