@@ -8,10 +8,12 @@ import { PublishPage } from "./pages/PublishPage";
 import { MyNeedsPage } from "./pages/MyNeedsPage";
 import { DonatePage } from "./pages/DonatePage";
 import { DeliverPage } from "./pages/DeliverPage";
+import { InventoryPage } from "./pages/InventoryPage";
+import { DistributionPage } from "./pages/DistributionPage";
 
-type Route = "map" | "publish" | "mine" | "donate" | "deliver";
+type Route = "map" | "publish" | "mine" | "donate" | "deliver" | "inventory" | "distribution";
 
-const ROUTES: Route[] = ["map", "publish", "mine", "donate", "deliver"];
+const ROUTES: Route[] = ["map", "publish", "mine", "donate", "deliver", "inventory", "distribution"];
 
 function currentRoute(): Route {
   const h = window.location.hash.replace("#/", "") as Route;
@@ -101,6 +103,12 @@ export function App() {
           <button onClick={() => go("deliver")} aria-current={route === "deliver" ? "page" : undefined}>
             Llevar
           </button>
+          <button onClick={() => go("inventory")} aria-current={route === "inventory" ? "page" : undefined}>
+            Inventario
+          </button>
+          <button onClick={() => go("distribution")} aria-current={route === "distribution" ? "page" : undefined}>
+            Distribución
+          </button>
           <button onClick={() => go("mine")} aria-current={route === "mine" ? "page" : undefined}>
             {t.nav.mine}
           </button>
@@ -110,6 +118,8 @@ export function App() {
           {route === "publish" && <PublishPage onPublished={() => go("map")} />}
           {route === "donate" && <DonatePage />}
           {route === "deliver" && <DeliverPage />}
+          {route === "inventory" && <InventoryPage />}
+          {route === "distribution" && <DistributionPage />}
           {route === "mine" && <MyNeedsPage />}
         </main>
       </CategoriesCtx.Provider>

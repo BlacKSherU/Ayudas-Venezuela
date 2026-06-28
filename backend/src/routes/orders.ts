@@ -13,6 +13,7 @@ import { broadcastToRegion } from "../lib/realtime";
 import { recordAudit } from "../lib/audit";
 import { pushToIdentities, pushToTag } from "../lib/notifications";
 import { getNeedRow, getNeedPublic } from "../db/queries";
+import { recordOrderPickup, recordOrderDelivery } from "../db/inventory-queries";
 import {
   createOrder,
   getNeedOwnerId,
@@ -58,12 +59,12 @@ ordersRoutes.post("/", async (c) => {
     const regionCode = resolveRegion(pickupZone.lat, pickupZone.lng);
     const pickupExact = await encryptCoord(c.env, pickupLocation.lat, pickupLocation.lng);
 
-    // Copia los insumos de la necesidad a la orden.
+    // Copia los insumos de la necesidad a la orden (incluido el producto si se detalló).
     const { results: items } = await c.env.DB.prepare(
-      `SELECT category_code, quantity FROM need_item WHERE need_id = ?`,
+      `SELECT category_code, quantity, product_id FROM need_item WHERE need_id = ?`,
     )
       .bind(needId)
-      .all<{ category_code: string; quantity: string | null }>();
+      .all<{ category_code: string; quantity: string | null; product_id: string | null }>();
 
     // Códigos de un solo uso (se devuelven; en producción el de entrega se enruta al necesitado).
     const pickupCode = generateCode();
@@ -83,7 +84,11 @@ ordersRoutes.post("/", async (c) => {
       regionCode,
       pickupCodeHash: await hashCode(pickupCode),
       dropoffCodeHash: await hashCode(dropoffCode),
-      items: items.map((i) => ({ categoryCode: i.category_code, quantity: i.quantity })),
+      items: items.map((i) => ({
+        categoryCode: i.category_code,
+        quantity: i.quantity,
+        productId: i.product_id,
+      })),
       now,
     });
 
@@ -230,6 +235,26 @@ async function advanceWithCode(
     const now = Date.now();
     await setOrderStatus(c.env, id, target, now, { delivered: target === "entregada" });
     await broadcastToOrder(c.env, id, { type: "order.status", status: target, at: now });
+
+    // Custodia en el inventario (feature 3): recogida (donante→transportista) y entrega
+    // (transportista→necesitado). Solo afecta ítems de la orden que referencian un producto.
+    if (target === "recogida") {
+      await recordOrderPickup(c.env, {
+        orderId: id,
+        donorId: row.donor_identity_id,
+        transporterId: identityId,
+        now,
+      });
+    } else if (target === "entregada") {
+      const recipientId = await getNeedOwnerId(c.env, row.need_id);
+      if (recipientId)
+        await recordOrderDelivery(c.env, {
+          orderId: id,
+          transporterId: identityId,
+          recipientId,
+          now,
+        });
+    }
 
     // Push a donante y necesitado: recogida (en camino) o entrega completada.
     const needyId = await getNeedOwnerId(c.env, row.need_id);

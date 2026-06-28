@@ -52,4 +52,31 @@ export async function registerTransportista(
   return { cookie, supportId: body.supportId };
 }
 
+/** Autentica y devuelve la cookie + el identityId (útil para inventario público). */
+export async function authedIdentity(
+  contact: string,
+): Promise<{ cookie: string; identityId: string }> {
+  const cookie = await authenticate(contact);
+  const me = await SELF.fetch(`${BASE}/identity/me`, { headers: { Cookie: cookie } });
+  const body = (await me.json()) as { identityId: string };
+  return { cookie, identityId: body.identityId };
+}
+
+/** Crea (o reutiliza) un producto del catálogo y devuelve su id. */
+export async function createProduct(
+  cookie: string,
+  name: string,
+  categoryCode = "alimentos",
+  dimension = "masa",
+  baseUnit = "gramo",
+): Promise<string> {
+  const res = await SELF.fetch(`${BASE}/products`, {
+    method: "POST",
+    headers: { Cookie: cookie, "Content-Type": "application/json" },
+    body: JSON.stringify({ name, categoryCode, dimension, baseUnit }),
+  });
+  const body = (await res.json()) as { id: string };
+  return body.id;
+}
+
 export { BASE };

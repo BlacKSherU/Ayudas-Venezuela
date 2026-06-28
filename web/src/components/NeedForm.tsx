@@ -2,9 +2,10 @@ import { useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
 import { useCategories } from "../App";
 import { MapPicker } from "./MapPicker";
+import { ProductPicker } from "./ProductPicker";
 import { CategoryIcon } from "../lib/icons";
 import { t } from "../i18n";
-import type { Urgency } from "../lib/types";
+import type { Product, Urgency } from "../lib/types";
 
 /** Formulario para publicar una necesidad (US1). */
 export function NeedForm({ onPublished }: { onPublished?: () => void }) {
@@ -12,6 +13,8 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [urgency, setUrgency] = useState<Urgency>("media");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productCat, setProductCat] = useState("");
   const [note, setNote] = useState("");
   const [contact, setContact] = useState("");
   const [consent, setConsent] = useState(false);
@@ -35,7 +38,7 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
       setError(t.form.needLocation);
       return;
     }
-    if (selected.size === 0) {
+    if (selected.size === 0 && products.length === 0) {
       setError(t.form.needItem);
       return;
     }
@@ -44,7 +47,10 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
       await api.createNeed({
         urgency,
         location,
-        items: [...selected].map((categoryCode) => ({ categoryCode, quantity: null })),
+        items: [
+          ...[...selected].map((categoryCode) => ({ categoryCode, quantity: null })),
+          ...products.map((p) => ({ categoryCode: p.categoryCode, productId: p.id, quantity: null })),
+        ],
         note: note.trim() || null,
         contactPublic: contact.trim() || null,
         contactPublicConsent: consent,
@@ -104,6 +110,45 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
             </button>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset style={{ border: "none", padding: 0, margin: "0.75rem 0 0" }}>
+        <legend style={{ fontWeight: 600 }}>Productos específicos (opcional)</legend>
+        <select
+          value={productCat}
+          onChange={(e) => setProductCat(e.target.value)}
+          aria-label="Categoría del producto"
+        >
+          <option value="">Elige categoría para buscar…</option>
+          {categories.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.labelEs}
+            </option>
+          ))}
+        </select>
+        {productCat && (
+          <div style={{ marginTop: "0.5rem" }}>
+            <ProductPicker
+              categoryCode={productCat}
+              onPick={(p) => setProducts((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]))}
+            />
+          </div>
+        )}
+        {products.length > 0 && (
+          <div className="chips" style={{ marginTop: "0.5rem" }}>
+            {products.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="chip"
+                aria-pressed="true"
+                onClick={() => setProducts((prev) => prev.filter((x) => x.id !== p.id))}
+              >
+                {p.name} ✕
+              </button>
+            ))}
+          </div>
+        )}
       </fieldset>
 
       <label htmlFor="note">{t.form.note}</label>

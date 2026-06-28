@@ -64,7 +64,7 @@ export interface CreateNeedInput {
   regionCode: string;
   note: string | null;
   contactPublic: string | null;
-  items: { categoryCode: string; quantity: string | null }[];
+  items: { categoryCode: string; quantity: string | null; productId?: string | null }[];
   /** Ubicación exacta cifrada (FR-026): nunca pública, solo para entrega/auditoría. */
   exactEnc?: string | null;
   exactIv?: string | null;
@@ -99,8 +99,8 @@ export async function createNeed(env: Env, input: CreateNeedInput): Promise<Need
   for (const item of input.items) {
     stmts.push(
       env.DB.prepare(
-        `INSERT INTO need_item (id, need_id, category_code, quantity) VALUES (?, ?, ?, ?)`,
-      ).bind(newId(), id, item.categoryCode, item.quantity),
+        `INSERT INTO need_item (id, need_id, category_code, quantity, product_id) VALUES (?, ?, ?, ?, ?)`,
+      ).bind(newId(), id, item.categoryCode, item.quantity, item.productId ?? null),
     );
   }
   await env.DB.batch(stmts);

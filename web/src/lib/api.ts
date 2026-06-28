@@ -1,9 +1,12 @@
 import type {
   Bbox,
   Category,
+  InventoryBalance,
+  LedgerMovement,
   Need,
   NeedStatus,
   Order,
+  Product,
   SupportProfile,
   SupportRole,
   Urgency,
@@ -40,7 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export interface NewNeedInput {
   urgency: Urgency;
   location: { lat: number; lng: number };
-  items: { categoryCode: string; quantity: string | null }[];
+  items: { categoryCode: string; quantity: string | null; productId?: string | null }[];
   note: string | null;
   contactPublic: string | null;
   contactPublicConsent: boolean;
@@ -137,6 +140,41 @@ export const api = {
   releaseOrder: (id: string) => request<{ order: Order }>(`/orders/${id}/release`, { method: "POST" }),
 
   roles: () => request<{ roles: SupportRole[] }>("/catalog/roles"),
+
+  // --- Feature 3: catálogo de productos, inventario, distribución ---
+  searchProducts: (search: string, category?: string) => {
+    const p = new URLSearchParams({ search });
+    if (category) p.set("category", category);
+    return request<{ products: Product[] }>(`/products?${p.toString()}`);
+  },
+  createProduct: (input: { name: string; categoryCode: string; dimension: string; baseUnit: string }) =>
+    request<Product>("/products", { method: "POST", body: JSON.stringify(input) }),
+  addInventoryItem: (productId: string, declaredQty: number, declaredUnit: string) =>
+    request<{ productId: string; qtyBase: number }>("/inventory/items", {
+      method: "POST",
+      body: JSON.stringify({ productId, declaredQty, declaredUnit }),
+    }),
+  decreaseInventoryItem: (productId: string, declaredQty: number, declaredUnit: string, reason: string) =>
+    request<{ productId: string; qtyBase: number }>(`/inventory/items/${productId}/decrease`, {
+      method: "POST",
+      body: JSON.stringify({ declaredQty, declaredUnit, reason }),
+    }),
+  getInventory: (ref: string) =>
+    request<{ owner: { publicName: string }; balances: InventoryBalance[] }>(`/inventory/${ref}`),
+  getLedger: (ref: string) =>
+    request<{ owner: { publicName: string }; movements: LedgerMovement[] }>(`/inventory/${ref}/ledger`),
+  setPublicName: (publicName: string | null) =>
+    request<{ publicName: string | null }>("/identity/public-name", {
+      method: "PATCH",
+      body: JSON.stringify({ publicName }),
+    }),
+  directDelivery: (needId: string, items: { productId: string; declaredQty: number; declaredUnit: string }[]) =>
+    request<{ ok: boolean }>("/deliveries/direct", { method: "POST", body: JSON.stringify({ needId, items }) }),
+  distribution: () =>
+    request<{
+      byProduct: { product: { id: string; name: string; baseUnit: string }; supplyBase: number; demandCount: number }[];
+      unmetByRegion: { regionCode: string; demandUnmet: number }[];
+    }>("/distribution"),
 };
 
 export { API_BASE };

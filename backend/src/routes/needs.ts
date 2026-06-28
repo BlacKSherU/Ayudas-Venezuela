@@ -35,9 +35,15 @@ const createSchema = z.object({
   urgency: z.enum(["alta", "media", "baja"]),
   location: z.object({ lat: z.number(), lng: z.number() }),
   items: z
-    .array(z.object({ categoryCode: z.string(), quantity: z.string().max(60).nullish() }))
+    .array(
+      z.object({
+        categoryCode: z.string(),
+        quantity: z.string().max(60).nullish(),
+        productId: z.string().nullish(),
+      }),
+    )
     .min(1)
-    .max(10),
+    .max(20),
   note: z.string().max(280).nullish(),
   contactPublic: z.string().max(200).nullish(),
   contactPublicConsent: z.boolean().optional(),
@@ -138,7 +144,11 @@ needsRoutes.post("/", async (c) => {
       regionCode,
       note: data.note?.trim() || null,
       contactPublic,
-      items: data.items.map((i) => ({ categoryCode: i.categoryCode, quantity: i.quantity ?? null })),
+      items: data.items.map((i) => ({
+        categoryCode: i.categoryCode,
+        quantity: i.quantity ?? null,
+        productId: i.productId ?? null,
+      })),
       exactEnc: exact.enc,
       exactIv: exact.iv,
       keyVersion: exact.keyVersion,

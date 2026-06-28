@@ -71,3 +71,21 @@ identityRoutes.get("/me", async (c) => {
   const identityId = await getSessionIdentity(c);
   return c.json({ identityId });
 });
+
+// PATCH /identity/public-name — fija el nombre público (real o seudónimo) para el libro (FR-015).
+identityRoutes.patch("/public-name", async (c) => {
+  try {
+    const identityId = await getSessionIdentity(c);
+    if (!identityId) throw new AppError("UNAUTHENTICATED", "Inicia sesión", 401);
+    const parsed = z
+      .object({ publicName: z.string().max(60).nullable() })
+      .safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Datos inválidos", 400);
+    await c.env.DB.prepare(`UPDATE identity SET public_name = ? WHERE id = ?`)
+      .bind(parsed.data.publicName?.trim() || null, identityId)
+      .run();
+    return c.json({ publicName: parsed.data.publicName?.trim() || null });
+  } catch (err) {
+    return sendError(c, err);
+  }
+});

@@ -73,3 +73,37 @@ export interface SupportRole {
   labelEs: string;
   requiresCedula: boolean;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  categoryCode: string;
+  dimension: "masa" | "volumen" | "conteo";
+  baseUnit: string;
+}
+
+export interface InventoryBalance {
+  product: { id: string; name: string; baseUnit: string; categoryCode: string };
+  kind: string;
+  qtyBase: number;
+}
+
+export interface LedgerMovement {
+  id: string;
+  type: string;
+  direction: "in" | "out";
+  qtyBase: number;
+  declaredUnit: string;
+  declaredQty: number;
+  reason: string | null;
+  orderId: string | null;
+  at: number;
+  product: { name: string };
+  counterparty: { publicName: string } | null;
+}
+
+export const UNITS_BY_DIMENSION: Record<string, string[]> = {
+  masa: ["gramo", "kg"],
+  volumen: ["mililitro", "litro"],
+  conteo: ["unidad", "docena"],
+};

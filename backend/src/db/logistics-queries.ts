@@ -150,7 +150,7 @@ export interface CreateOrderInput {
   regionCode: string;
   pickupCodeHash: string;
   dropoffCodeHash: string;
-  items: { categoryCode: string; quantity: string | null }[];
+  items: { categoryCode: string; quantity: string | null; productId?: string | null }[];
   now: number;
 }
 
@@ -183,8 +183,8 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
   for (const it of input.items) {
     stmts.push(
       env.DB.prepare(
-        `INSERT INTO order_item (id, order_id, category_code, quantity) VALUES (?, ?, ?, ?)`,
-      ).bind(newId(), id, it.categoryCode, it.quantity),
+        `INSERT INTO order_item (id, order_id, category_code, quantity, product_id) VALUES (?, ?, ?, ?, ?)`,
+      ).bind(newId(), id, it.categoryCode, it.quantity, it.productId ?? null),
     );
   }
   await env.DB.batch(stmts);

@@ -14,6 +14,10 @@ import { ordersRoutes } from "./routes/orders";
 import { loadSupportRoles } from "./domain/roles";
 import { loadResourceTypes } from "./domain/resource-types";
 import { getSessionIdentity } from "./lib/auth";
+import { productsRoutes } from "./routes/products";
+import { inventoryRoutes } from "./routes/inventory";
+import { deliveriesRoutes } from "./routes/deliveries";
+import { distributionRoutes } from "./routes/distribution";
 
 export { MapRoom } from "./do/map-room";
 export { DeliveryRoom } from "./do/delivery-room";
@@ -81,6 +85,10 @@ app.route("/api/v1/needs", needsRoutes);
 app.route("/api/v1/support", supportRoutes);
 app.route("/api/v1/media", mediaRoutes);
 app.route("/api/v1/orders", ordersRoutes);
+app.route("/api/v1/products", productsRoutes);
+app.route("/api/v1/inventory", inventoryRoutes);
+app.route("/api/v1/deliveries", deliveriesRoutes);
+app.route("/api/v1/distribution", distributionRoutes);
 
 app.notFound((c) => c.json({ error: { code: "NOT_FOUND", message: "Recurso no encontrado" } }, 404));
 app.onError((err, c) => {
