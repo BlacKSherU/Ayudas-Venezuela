@@ -14,6 +14,9 @@ interface NeedRow {
   created_at: number;
   updated_at: number;
   committed_at: number | null;
+  exact_enc: string | null;
+  exact_iv: string | null;
+  key_version: number | null;
 }
 
 interface ItemRow {
@@ -62,6 +65,10 @@ export interface CreateNeedInput {
   note: string | null;
   contactPublic: string | null;
   items: { categoryCode: string; quantity: string | null }[];
+  /** Ubicación exacta cifrada (FR-026): nunca pública, solo para entrega/auditoría. */
+  exactEnc?: string | null;
+  exactIv?: string | null;
+  keyVersion?: number | null;
   now: number;
 }
 
@@ -71,8 +78,8 @@ export async function createNeed(env: Env, input: CreateNeedInput): Promise<Need
     env.DB.prepare(
       `INSERT INTO need
         (id, owner_identity_id, status, urgency, zone_lat, zone_lng, region_code,
-         contact_public, note, created_at, updated_at, committed_at)
-       VALUES (?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+         contact_public, note, created_at, updated_at, committed_at, exact_enc, exact_iv, key_version)
+       VALUES (?, ?, 'pendiente', ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
     ).bind(
       id,
       input.ownerIdentityId,
@@ -84,6 +91,9 @@ export async function createNeed(env: Env, input: CreateNeedInput): Promise<Need
       input.note,
       input.now,
       input.now,
+      input.exactEnc ?? null,
+      input.exactIv ?? null,
+      input.keyVersion ?? null,
     ),
   ];
   for (const item of input.items) {

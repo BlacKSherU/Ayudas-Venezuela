@@ -1,16 +1,21 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api } from "./lib/api";
+import { pushLogin } from "./lib/push";
 import type { Category } from "./lib/types";
 import { t } from "./i18n";
 import { MapPage } from "./pages/MapPage";
 import { PublishPage } from "./pages/PublishPage";
 import { MyNeedsPage } from "./pages/MyNeedsPage";
+import { DonatePage } from "./pages/DonatePage";
+import { DeliverPage } from "./pages/DeliverPage";
 
-type Route = "map" | "publish" | "mine";
+type Route = "map" | "publish" | "mine" | "donate" | "deliver";
+
+const ROUTES: Route[] = ["map", "publish", "mine", "donate", "deliver"];
 
 function currentRoute(): Route {
-  const h = window.location.hash.replace("#/", "");
-  return h === "publish" || h === "mine" ? h : "map";
+  const h = window.location.hash.replace("#/", "") as Route;
+  return ROUTES.includes(h) ? h : "map";
 }
 
 // --- Contextos compartidos -------------------------------------------------
@@ -48,6 +53,8 @@ export function App() {
     try {
       const me = await api.me();
       setIdentityId(me.identityId);
+      // Vincula la suscripción push a la identidad (external_id) para envíos dirigidos.
+      if (me.identityId) pushLogin(me.identityId);
     } catch {
       setIdentityId(null);
     } finally {
@@ -88,6 +95,12 @@ export function App() {
           >
             {t.nav.publish}
           </button>
+          <button onClick={() => go("donate")} aria-current={route === "donate" ? "page" : undefined}>
+            Donar
+          </button>
+          <button onClick={() => go("deliver")} aria-current={route === "deliver" ? "page" : undefined}>
+            Llevar
+          </button>
           <button onClick={() => go("mine")} aria-current={route === "mine" ? "page" : undefined}>
             {t.nav.mine}
           </button>
@@ -95,6 +108,8 @@ export function App() {
         <main id="main">
           {route === "map" && <MapPage />}
           {route === "publish" && <PublishPage onPublished={() => go("map")} />}
+          {route === "donate" && <DonatePage />}
+          {route === "deliver" && <DeliverPage />}
           {route === "mine" && <MyNeedsPage />}
         </main>
       </CategoriesCtx.Provider>

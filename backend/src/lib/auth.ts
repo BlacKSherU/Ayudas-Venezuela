@@ -5,6 +5,8 @@ import { hmacHex, sha256Hex, timingSafeEqual } from "./crypto";
 import { newId } from "./ids";
 import { logEvent } from "./audit";
 import { sendOtpEmail, smtpConfigured } from "./email";
+import { wasenderConfigured, normalizePhone, buildOtpText } from "./wasender";
+import { enqueueWhatsApp } from "./whatsapp-queue";
 import { AppError } from "./responses";
 
 const OTP_TTL_SEC = 600; // 10 minutos
@@ -78,7 +80,13 @@ async function deliverCode(env: Env, channel: Channel, contact: string, code: st
       throw new AppError("EMAIL_FAILED", "No se pudo enviar el código por correo", 502);
     }
   }
-  // Sin SMTP configurado: registramos el envío sin exponer el contacto.
+  if (channel === "phone" && wasenderConfigured(env)) {
+    // Encola en la cola con rate-limit y retorna de inmediato: la petición del usuario nunca
+    // falla por límites de WaSender; el envío real se drena de forma espaciada.
+    await enqueueWhatsApp(env, normalizePhone(contact), buildOtpText(code));
+    return;
+  }
+  // Sin proveedor configurado: registramos el envío sin exponer el contacto.
   logEvent("otp.delivered", { channel, dev: env.ENVIRONMENT === "development" ? code : undefined });
 }
 

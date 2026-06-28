@@ -1,7 +1,11 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { initPush } from "./lib/push";
 import "./styles.css";
+
+// Inicializa OneSignal (push) al arrancar.
+initPush();
 
 const container = document.getElementById("root");
 if (!container) throw new Error("No se encontró el contenedor #root");

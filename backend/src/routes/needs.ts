@@ -6,8 +6,10 @@ import { getSessionIdentity } from "../lib/auth";
 import { isWithinVenezuela, obfuscate, resolveRegion } from "../domain/geo";
 import { isValidCategory } from "../domain/categories";
 import { isRecentDuplicate } from "../lib/dedupe";
+import { encryptCoord } from "../lib/encryption";
 import { recordAudit } from "../lib/audit";
 import { broadcastToRegion } from "../lib/realtime";
+import { pushToTag } from "../lib/notifications";
 import { sha256Hex } from "../lib/crypto";
 import {
   countDelivered,
@@ -126,6 +128,8 @@ needsRoutes.post("/", async (c) => {
     }
 
     const now = Date.now();
+    // Ubicación exacta cifrada (FR-026): nunca pública; solo para entrega/auditoría.
+    const exact = await encryptCoord(c.env, data.location.lat, data.location.lng);
     const need = await createNeed(c.env, {
       ownerIdentityId: identityId,
       urgency: data.urgency,
@@ -135,6 +139,9 @@ needsRoutes.post("/", async (c) => {
       note: data.note?.trim() || null,
       contactPublic,
       items: data.items.map((i) => ({ categoryCode: i.categoryCode, quantity: i.quantity ?? null })),
+      exactEnc: exact.enc,
+      exactIv: exact.iv,
+      keyVersion: exact.keyVersion,
       now,
     });
 
@@ -146,6 +153,15 @@ needsRoutes.post("/", async (c) => {
       now,
     });
     await broadcastToRegion(c.env, regionCode, { type: "need.created", need });
+
+    // Push a quienes estén suscritos como donantes (FR push: nueva necesidad).
+    c.executionCtx.waitUntil(
+      pushToTag(c.env, "role_donor", "true", {
+        title: "Nueva necesidad cerca",
+        body: "Se publicó una nueva necesidad de ayuda. Toca para verla en el mapa.",
+        url: c.env.ALLOWED_ORIGIN,
+      }),
+    );
 
     return c.json(need, 201);
   } catch (err) {
