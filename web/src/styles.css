@@ -352,10 +352,11 @@ header.app-bar .login-btn.secondary {
 }
 /* Botón de cuenta (solo icono de persona) en la cabecera. */
 .account-btn {
-  background: transparent;
   border-radius: 999px;
 }
+/* Mayor especificidad que .icon-btn para que el icono blanco no quede sobre fondo blanco. */
 header.app-bar .account-btn {
+  background: transparent;
   color: #fff;
   border-color: rgba(255, 255, 255, 0.7);
 }
