@@ -344,10 +344,36 @@ header.app-bar .login-btn.secondary {
   border: 1px solid rgba(255, 255, 255, 0.8);
 }
 .login-status {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   flex: 0 0 auto;
+}
+/* Botón de cuenta (solo icono de persona) en la cabecera. */
+.account-btn {
+  background: transparent;
+  border-radius: 999px;
+}
+header.app-bar .account-btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.7);
+}
+header.app-bar .account-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+/* Submenú de cuenta: anclado bajo el icono, alineado a la derecha. */
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 1000;
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  padding: 0.25rem;
 }
 .login-id {
   display: inline-flex;

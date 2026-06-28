@@ -12,7 +12,7 @@ import { broadcastToOrder } from "../lib/delivery-realtime";
 import { broadcastToRegion } from "../lib/realtime";
 import { recordAudit } from "../lib/audit";
 import { pushToIdentities, pushToTag } from "../lib/notifications";
-import { getNeedRow, getNeedPublic } from "../db/queries";
+import { getNeedRow, getNeedPublic, createNeed } from "../db/queries";
 import { getCenterRow } from "../db/centers-queries";
 import { recordOrderPickup, recordOrderDelivery } from "../db/inventory-queries";
 import {
@@ -40,7 +40,20 @@ async function requireSession(c: Context<{ Bindings: Env }>): Promise<string> {
 }
 
 const createSchema = z.object({
-  needId: z.string(),
+  // Destino: una necesidad existente (needId) O un centro de acopio (targetCenterId).
+  needId: z.string().nullish(),
+  targetCenterId: z.string().nullish(),
+  // Insumos a donar (requeridos al donar a un centro; para una necesidad se copian de ella).
+  items: z
+    .array(
+      z.object({
+        categoryCode: z.string(),
+        quantity: z.string().max(60).nullish(),
+        productId: z.string().nullish(),
+      }),
+    )
+    .max(20)
+    .optional(),
   pickupLocation: z.object({ lat: z.number(), lng: z.number() }).optional(),
   // Feature 4: donar desde un centro de acopio propio (la recogida = ubicación del centro).
   centerId: z.string().nullish(),
@@ -56,7 +69,40 @@ ordersRoutes.post("/", async (c) => {
     const donorId = await requireSession(c);
     const parsed = createSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Datos inválidos", 400);
-    const { needId, centerId, donorContact, donationEvidenceKey } = parsed.data;
+    const { needId: bodyNeedId, targetCenterId, items: bodyItems, centerId, donorContact, donationEvidenceKey } =
+      parsed.data;
+
+    // Donar a un CENTRO: se crea una necesidad interna del dueño del centro, en la ubicación del
+    // centro, con los insumos elegidos; la orden apunta a ella (enfoque seguro, sin tocar el esquema).
+    let needId = bodyNeedId ?? null;
+    if (targetCenterId) {
+      const center = await getCenterRow(c.env, targetCenterId);
+      if (!center || center.status !== "activo")
+        throw new AppError("NOT_FOUND", "Centro de acopio no encontrado", 404);
+      if (!bodyItems || bodyItems.length === 0)
+        throw new AppError("VALIDATION_ERROR", "Elige qué insumos donar al centro", 400);
+      const exact = await encryptCoord(c.env, center.lat, center.lng);
+      const createdNeed = await createNeed(c.env, {
+        ownerIdentityId: center.owner_identity_id,
+        urgency: "media",
+        zoneLat: center.lat,
+        zoneLng: center.lng,
+        regionCode: center.region_code,
+        contactPublic: null,
+        note: `Donación al centro: ${center.name}`,
+        items: bodyItems.map((i) => ({
+          categoryCode: i.categoryCode,
+          quantity: i.quantity ?? null,
+          productId: i.productId ?? null,
+        })),
+        exactEnc: exact.enc,
+        exactIv: exact.iv,
+        keyVersion: exact.keyVersion,
+        now: Date.now(),
+      });
+      needId = createdNeed.id;
+    }
+    if (!needId) throw new AppError("VALIDATION_ERROR", "Indica una necesidad o un centro", 400);
 
     const need = await getNeedRow(c.env, needId);
     if (!need) throw new AppError("NOT_FOUND", "Necesidad no encontrada", 404);

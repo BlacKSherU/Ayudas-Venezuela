@@ -6,6 +6,7 @@ import { MapPicker } from "../components/MapPicker";
 import { NeedLocationMap } from "../components/NeedLocationMap";
 import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
 import { MediaCapture } from "../components/MediaCapture";
+import { DonateToCenterFlow } from "../components/DonateToCenterFlow";
 import { Stepper } from "../components/Stepper";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
@@ -24,6 +25,7 @@ export function DonatePage() {
   const [pickupSource, setPickupSource] = useState<string>("punto");
   const [donorContact, setDonorContact] = useState("");
   const [donationPhoto, setDonationPhoto] = useState<File | null>(null);
+  const [target, setTarget] = useState<"need" | "center">("need");
   const [codes, setCodes] = useState<{ pickupCode: string; dropoffCode: string } | null>(null);
   const [directDone, setDirectDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -124,13 +126,24 @@ export function DonatePage() {
 
   return (
     <div className="container">
-      <h2>Donar a una necesidad</h2>
-      {error && (
+      <h2>Donar</h2>
+      <div className="chips" role="group" aria-label="¿A quién donas?" style={{ marginBottom: "0.75rem" }}>
+        <button type="button" className="chip" aria-pressed={target === "need"} onClick={() => setTarget("need")}>
+          A una necesidad
+        </button>
+        <button type="button" className="chip" aria-pressed={target === "center"} onClick={() => setTarget("center")}>
+          A un centro de acopio
+        </button>
+      </div>
+
+      {target === "center" ? (
+        <DonateToCenterFlow />
+      ) : error ? (
         <p className="error" role="alert">
           {error}
         </p>
-      )}
-      {!selected ? (
+      ) : null}
+      {target === "center" ? null : !selected ? (
         <>
           <p className="muted">Elige una necesidad pendiente para preparar tu donación:</p>
           {needs.length === 0 && <p className="muted">No hay necesidades pendientes ahora.</p>}

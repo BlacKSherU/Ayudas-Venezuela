@@ -124,7 +124,9 @@ export const api = {
   mySupportRoles: () => request<{ roles: SupportProfile[] }>("/support/mine"),
 
   createOrder: (input: {
-    needId: string;
+    needId?: string;
+    targetCenterId?: string | null;
+    items?: { categoryCode: string; quantity?: string | null; productId?: string | null }[];
     pickupLocation?: { lat: number; lng: number };
     centerId?: string | null;
     donorContact?: string | null;
