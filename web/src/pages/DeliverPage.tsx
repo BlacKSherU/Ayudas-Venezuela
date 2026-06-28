@@ -1,51 +1,20 @@
 import { useEffect, useState, useCallback, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
-import { useSession, useCategories } from "../App";
-import { IdentityGate } from "../components/IdentityGate";
+import { useCategories } from "../App";
 import { MediaCapture } from "../components/MediaCapture";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Order, SupportProfile, SupportRole } from "../lib/types";
 
-/** US1 + US3: registro de personal de apoyo y toma/entrega de órdenes. */
-export function DeliverPage() {
-  const { identityId, loading } = useSession();
-  const [support, setSupport] = useState<SupportProfile | null>(null);
-  const [checking, setChecking] = useState(true);
+// Feature 4: la interfaz de voluntario vive en VolunteersSection. Aquí se exportan las piezas
+// reutilizables (registro y flujo de órdenes) para que la sección las componga por rol.
 
-  const loadSupport = useCallback(async () => {
-    setChecking(true);
-    try {
-      const r = await api.mySupport();
-      setSupport(r.support);
-    } catch {
-      setSupport(null);
-    } finally {
-      setChecking(false);
-    }
-  }, []);
+// --- Registro de voluntario (US1/US3) --------------------------------------
 
-  useEffect(() => {
-    if (identityId) void loadSupport();
-    else setChecking(false);
-  }, [identityId, loadSupport]);
-
-  if (loading || checking) return <div className="container">Cargando…</div>;
-  if (!identityId)
-    return (
-      <div className="container">
-        <IdentityGate />
-      </div>
-    );
-  if (!support) return <SupportSignup onDone={loadSupport} />;
-  return <OrdersList support={support} />;
-}
-
-// --- Registro de personal de apoyo (US1) -----------------------------------
-
-function SupportSignup({ onDone }: { onDone: () => void }) {
+/** Registro de un rol de voluntario (cédula cifrada). `presetRole` fija el rol a registrar. */
+export function SupportSignup({ onDone, presetRole }: { onDone: () => void; presetRole?: string }) {
   const [roles, setRoles] = useState<SupportRole[]>([]);
-  const [roleCode, setRoleCode] = useState("transportista");
+  const [roleCode, setRoleCode] = useState(presetRole ?? "transportista");
   const [cedula, setCedula] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,6 +39,7 @@ function SupportSignup({ onDone }: { onDone: () => void }) {
         cedulaNumber: cedula.trim(),
         cedulaPhotoMediaKey: media.key,
       });
+      // Para notificaciones de órdenes, los roles de entrega se suscriben como "transportista".
       setRoleTag("transportista", true);
       requestPushPermission();
       onDone();
@@ -82,17 +52,17 @@ function SupportSignup({ onDone }: { onDone: () => void }) {
 
   return (
     <form className="container card" onSubmit={submit}>
-      <h2>Quiero ayudar con entregas</h2>
+      <h2>Quiero ser voluntario</h2>
       <p className="muted">
         Tus datos de cédula se guardan cifrados y nunca son públicos; solo respaldan tu
-        responsabilidad como transportista.
+        responsabilidad como voluntario.
       </p>
       {error && (
         <p className="error" role="alert">
           {error}
         </p>
       )}
-      <label htmlFor="role">Rol</label>
+      <label htmlFor="role">Tipo de voluntario</label>
       <select id="role" value={roleCode} onChange={(e) => setRoleCode(e.target.value)}>
         {(roles.length ? roles : [{ code: "transportista", labelEs: "Transportista", requiresCedula: true }]).map(
           (r) => (
@@ -116,7 +86,7 @@ function SupportSignup({ onDone }: { onDone: () => void }) {
 
 // --- Listado y flujo de órdenes (US3) --------------------------------------
 
-function OrdersList({ support }: { support: SupportProfile }) {
+export function OrdersList({ support }: { support: SupportProfile }) {
   const categories = useCategories();
   const geo = useGeolocation();
   const [orders, setOrders] = useState<Order[]>([]);

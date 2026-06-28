@@ -69,7 +69,11 @@ export class MapRoom extends DurableObject<Env> {
     const payload = JSON.stringify(event);
     for (const ws of this.ctx.getWebSockets()) {
       const sub = (ws.deserializeAttachment() as Subscription | null) ?? { bbox: null, filters: {} };
-      if (event.type === "need.closed" || this.matches(event.need, sub)) {
+      const broad =
+        event.type === "need.closed" ||
+        event.type === "center.created" ||
+        event.type === "center.removed";
+      if (broad || this.matches(event.need, sub)) {
         try {
           ws.send(payload);
         } catch {

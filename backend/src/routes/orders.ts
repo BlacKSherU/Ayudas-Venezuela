@@ -13,6 +13,7 @@ import { broadcastToRegion } from "../lib/realtime";
 import { recordAudit } from "../lib/audit";
 import { pushToIdentities, pushToTag } from "../lib/notifications";
 import { getNeedRow, getNeedPublic } from "../db/queries";
+import { getCenterRow } from "../db/centers-queries";
 import { recordOrderPickup, recordOrderDelivery } from "../db/inventory-queries";
 import {
   createOrder,
@@ -36,7 +37,9 @@ async function requireSession(c: Context<{ Bindings: Env }>): Promise<string> {
 
 const createSchema = z.object({
   needId: z.string(),
-  pickupLocation: z.object({ lat: z.number(), lng: z.number() }),
+  pickupLocation: z.object({ lat: z.number(), lng: z.number() }).optional(),
+  // Feature 4: donar desde un centro de acopio propio (la recogida = ubicación del centro).
+  centerId: z.string().nullish(),
 });
 
 // POST /orders — el donante prepara recursos y publica una orden desde una necesidad pendiente.
@@ -45,12 +48,24 @@ ordersRoutes.post("/", async (c) => {
     const donorId = await requireSession(c);
     const parsed = createSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Datos inválidos", 400);
-    const { needId, pickupLocation } = parsed.data;
+    const { needId, centerId } = parsed.data;
 
     const need = await getNeedRow(c.env, needId);
     if (!need) throw new AppError("NOT_FOUND", "Necesidad no encontrada", 404);
     if (need.status !== "pendiente")
       throw new AppError("NEED_NOT_AVAILABLE", "La necesidad ya no está disponible", 409);
+
+    // Recogida: desde un centro propio (ubicación exacta pública) o desde el punto indicado.
+    let pickupLocation = parsed.data.pickupLocation ?? null;
+    if (centerId) {
+      const center = await getCenterRow(c.env, centerId);
+      if (!center) throw new AppError("NOT_FOUND", "Centro de acopio no encontrado", 404);
+      if (center.owner_identity_id !== donorId)
+        throw new AppError("FORBIDDEN", "No eres el dueño de ese centro", 403);
+      pickupLocation = { lat: center.lat, lng: center.lng };
+    }
+    if (!pickupLocation)
+      throw new AppError("VALIDATION_ERROR", "Indica el punto de recogida o un centro", 400);
 
     if (!isWithinVenezuela(pickupLocation.lat, pickupLocation.lng))
       throw new AppError("OUT_OF_BOUNDS", "Ubicación de recogida fuera de Venezuela", 400);
@@ -89,6 +104,7 @@ ordersRoutes.post("/", async (c) => {
         quantity: i.quantity,
         productId: i.product_id,
       })),
+      centerId: centerId ?? null,
       now,
     });
 

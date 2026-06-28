@@ -31,11 +31,28 @@ export interface Bbox {
   maxLat: number;
 }
 
+/** Centro de acopio (feature 4): punto público con ubicación EXACTA. */
+export interface Center {
+  id: string;
+  name: string;
+  location: { lat: number; lng: number };
+  regionCode: string;
+  note: string | null;
+}
+
+/** Centro propio del usuario, con estado de moderación (anti-abuso). */
+export interface MyCenter extends Center {
+  status: "activo" | "oculto";
+  reportsCount: number;
+}
+
 export type RealtimeEvent =
   | { type: "hello"; serverTime: number }
   | { type: "need.created"; need: Need }
   | { type: "need.updated"; need: Need }
   | { type: "need.closed"; id: string; reason: string }
+  | { type: "center.created"; center: Center }
+  | { type: "center.removed"; id: string }
   | { type: "pong"; t: number };
 
 export type OrderStatus =

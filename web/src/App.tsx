@@ -3,39 +3,50 @@ import { api } from "./lib/api";
 import { pushLogin } from "./lib/push";
 import type { Category } from "./lib/types";
 import { t } from "./i18n";
-import { MapPage } from "./pages/MapPage";
-import { PublishPage } from "./pages/PublishPage";
-import { MyNeedsPage } from "./pages/MyNeedsPage";
-import { DonatePage } from "./pages/DonatePage";
-import { DeliverPage } from "./pages/DeliverPage";
-import { InventoryPage } from "./pages/InventoryPage";
-import { DistributionPage } from "./pages/DistributionPage";
-import { PublicLedgerPage } from "./pages/PublicLedgerPage";
+import { LoginButton } from "./components/LoginButton";
+import { IdentityGate } from "./components/IdentityGate";
+import { SectionNav, type Section, SECTIONS } from "./components/SectionNav";
+import { MapSection } from "./sections/MapSection";
+import { CentersSection } from "./sections/CentersSection";
+import { NeedsSection } from "./sections/NeedsSection";
+import { VolunteersSection } from "./sections/VolunteersSection";
 
-type Route =
-  | "map"
-  | "publish"
-  | "mine"
-  | "donate"
-  | "deliver"
-  | "inventory"
-  | "distribution"
-  | "ledger";
+// --- Enrutado por hash → { sección, vista } --------------------------------
+//
+// Feature 4: 4 secciones (Mapa, Centros de acopio, Necesitados, Voluntarios). Las rutas
+// previas (#/donate, #/inventory, …) se MAPEAN a su nueva ubicación para no romper enlaces
+// guardados; la query (p. ej. ?ref=) se conserva, así Transparencia sigue funcionando.
 
-const ROUTES: Route[] = [
-  "map",
-  "publish",
-  "mine",
-  "donate",
-  "deliver",
-  "inventory",
-  "distribution",
-  "ledger",
-];
+const LEGACY: Record<string, { section: Section; view?: string }> = {
+  map: { section: "mapa" },
+  distribution: { section: "mapa", view: "distribucion" },
+  ledger: { section: "mapa", view: "transparencia" },
+  publish: { section: "necesitados", view: "publicar" },
+  mine: { section: "necesitados", view: "mis" },
+  inventory: { section: "necesitados", view: "inventario" },
+  donate: { section: "centros", view: "donar" },
+  deliver: { section: "voluntarios" },
+};
 
-function currentRoute(): Route {
-  const h = window.location.hash.replace("#/", "").split("?")[0] as Route;
-  return ROUTES.includes(h) ? h : "map";
+interface RouteState {
+  section: Section;
+  view?: string;
+}
+
+function parseRoute(): RouteState {
+  const hash = window.location.hash || "#/mapa";
+  const path = hash.replace(/^#\/?/, "").split("?")[0] ?? "";
+  const query = hash.includes("?") ? hash.slice(hash.indexOf("?") + 1) : "";
+  const view = new URLSearchParams(query).get("view") ?? undefined;
+  if ((SECTIONS as readonly string[]).includes(path)) return { section: path as Section, view };
+  const legacy = LEGACY[path];
+  if (legacy) return { section: legacy.section, view: legacy.view };
+  return { section: "mapa" };
+}
+
+/** Navega a una sección (y opcionalmente una vista) actualizando el hash. */
+export function goTo(section: Section, view?: string): void {
+  window.location.hash = view ? `#/${section}?view=${view}` : `#/${section}`;
 }
 
 // --- Contextos compartidos -------------------------------------------------
@@ -44,11 +55,14 @@ interface SessionState {
   identityId: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  /** Abre el login global (modal) desde cualquier punto de la app. */
+  openLogin: () => void;
 }
 const SessionCtx = createContext<SessionState>({
   identityId: null,
   loading: true,
   refresh: async () => {},
+  openLogin: () => {},
 });
 export const useSession = () => useContext(SessionCtx);
 
@@ -58,13 +72,14 @@ export const useCategories = () => useContext(CategoriesCtx);
 // --- App -------------------------------------------------------------------
 
 export function App() {
-  const [route, setRoute] = useState<Route>(currentRoute());
+  const [route, setRoute] = useState<RouteState>(parseRoute());
   const [identityId, setIdentityId] = useState<string | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
-    const onHash = () => setRoute(currentRoute());
+    const onHash = () => setRoute(parseRoute());
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -90,60 +105,55 @@ export function App() {
       .catch(() => setCategories([]));
   }, [refresh]);
 
-  const go = (r: Route) => {
-    window.location.hash = `#/${r}`;
-    setRoute(r);
-  };
+  const openLogin = useCallback(() => setLoginOpen(true), []);
+
+  const session: SessionState = { identityId, loading: loadingSession, refresh, openLogin };
 
   return (
-    <SessionCtx.Provider value={{ identityId, loading: loadingSession, refresh }}>
+    <SessionCtx.Provider value={session}>
       <CategoriesCtx.Provider value={categories}>
         <a className="skip-link" href="#main">
           Saltar al contenido
         </a>
-        <header className="app-bar">
-          <h1>{t.appName}</h1>
-          <p>{t.tagline}</p>
+        <header className="app-bar app-bar-row">
+          <div>
+            <h1>{t.appName}</h1>
+            <p>{t.tagline}</p>
+          </div>
+          <LoginButton />
         </header>
-        <nav className="tabs" aria-label="Secciones">
-          <button onClick={() => go("map")} aria-current={route === "map" ? "page" : undefined}>
-            {t.nav.map}
-          </button>
-          <button
-            onClick={() => go("publish")}
-            aria-current={route === "publish" ? "page" : undefined}
-          >
-            {t.nav.publish}
-          </button>
-          <button onClick={() => go("donate")} aria-current={route === "donate" ? "page" : undefined}>
-            Donar
-          </button>
-          <button onClick={() => go("deliver")} aria-current={route === "deliver" ? "page" : undefined}>
-            Llevar
-          </button>
-          <button onClick={() => go("inventory")} aria-current={route === "inventory" ? "page" : undefined}>
-            Inventario
-          </button>
-          <button onClick={() => go("distribution")} aria-current={route === "distribution" ? "page" : undefined}>
-            Distribución
-          </button>
-          <button onClick={() => go("ledger")} aria-current={route === "ledger" ? "page" : undefined}>
-            Transparencia
-          </button>
-          <button onClick={() => go("mine")} aria-current={route === "mine" ? "page" : undefined}>
-            {t.nav.mine}
-          </button>
-        </nav>
+
+        <SectionNav active={route.section} onNavigate={(s) => goTo(s)} />
+
         <main id="main">
-          {route === "map" && <MapPage />}
-          {route === "publish" && <PublishPage onPublished={() => go("map")} />}
-          {route === "donate" && <DonatePage />}
-          {route === "deliver" && <DeliverPage />}
-          {route === "inventory" && <InventoryPage />}
-          {route === "distribution" && <DistributionPage />}
-          {route === "ledger" && <PublicLedgerPage />}
-          {route === "mine" && <MyNeedsPage />}
+          {route.section === "mapa" && <MapSection view={route.view} />}
+          {route.section === "centros" && <CentersSection view={route.view} />}
+          {route.section === "necesitados" && <NeedsSection view={route.view} />}
+          {route.section === "voluntarios" && <VolunteersSection />}
         </main>
+
+        {loginOpen && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.identity.title}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setLoginOpen(false);
+            }}
+          >
+            <div className="modal">
+              <button
+                className="modal-close"
+                aria-label={t.common.close}
+                onClick={() => setLoginOpen(false)}
+              >
+                ×
+              </button>
+              <IdentityGate onAuthed={() => setLoginOpen(false)} />
+            </div>
+          </div>
+        )}
       </CategoriesCtx.Provider>
     </SessionCtx.Provider>
   );

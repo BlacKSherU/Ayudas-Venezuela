@@ -49,11 +49,22 @@ export interface NeedPublic {
   updatedAt: number;
 }
 
+/** Vista pública de un centro de acopio (feature 4). Ubicación EXACTA: es un punto público. */
+export interface CenterPublic {
+  id: string;
+  name: string;
+  location: { lat: number; lng: number };
+  regionCode: string;
+  note: string | null;
+}
+
 /** Eventos de tiempo real difundidos por el Durable Object MapRoom. */
 export type RealtimeEvent =
   | { type: "need.created"; need: NeedPublic }
   | { type: "need.updated"; need: NeedPublic }
-  | { type: "need.closed"; id: string; reason: string };
+  | { type: "need.closed"; id: string; reason: string }
+  | { type: "center.created"; center: CenterPublic }
+  | { type: "center.removed"; id: string };
 
 export type OrderStatus =
   | "disponible"

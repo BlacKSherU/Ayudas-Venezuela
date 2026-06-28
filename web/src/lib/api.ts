@@ -1,8 +1,10 @@
 import type {
   Bbox,
   Category,
+  Center,
   InventoryBalance,
   LedgerMovement,
+  MyCenter,
   Need,
   NeedStatus,
   Order,
@@ -117,8 +119,14 @@ export const api = {
       body: JSON.stringify(input),
     }),
   mySupport: () => request<{ support: SupportProfile | null }>("/support/me"),
+  /** Feature 4: todos los roles de voluntario del usuario (para el selector de rol). */
+  mySupportRoles: () => request<{ roles: SupportProfile[] }>("/support/mine"),
 
-  createOrder: (input: { needId: string; pickupLocation: { lat: number; lng: number } }) =>
+  createOrder: (input: {
+    needId: string;
+    pickupLocation?: { lat: number; lng: number };
+    centerId?: string | null;
+  }) =>
     request<{ order: Order; pickupCode: string; dropoffCode: string }>("/orders", {
       method: "POST",
       body: JSON.stringify(input),
@@ -175,6 +183,22 @@ export const api = {
       byProduct: { product: { id: string; name: string; baseUnit: string }; supplyBase: number; demandCount: number }[];
       unmetByRegion: { regionCode: string; demandUnmet: number }[];
     }>("/distribution"),
+
+  // --- Feature 4: centros de acopio ---
+  listCenters: (bbox: Bbox) =>
+    request<{ centers: Center[]; count: number }>(
+      `/centers?bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}`,
+    ),
+  myCenters: () => request<{ centers: MyCenter[] }>("/centers/mine"),
+  createCenter: (input: { name: string; location: { lat: number; lng: number }; note: string | null }) =>
+    request<Center>("/centers", { method: "POST", body: JSON.stringify(input) }),
+  updateCenter: (
+    id: string,
+    input: { name?: string; location?: { lat: number; lng: number }; note?: string | null },
+  ) => request<Center>(`/centers/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  deleteCenter: (id: string) => request<void>(`/centers/${id}`, { method: "DELETE" }),
+  reportCenter: (id: string) =>
+    request<{ ok: boolean; hidden: boolean }>(`/centers/${id}/report`, { method: "POST" }),
 };
 
 export { API_BASE };

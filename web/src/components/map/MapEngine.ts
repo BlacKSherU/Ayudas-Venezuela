@@ -1,10 +1,11 @@
-import type { Bbox, Need } from "../../lib/types";
+import type { Bbox, Center, Need } from "../../lib/types";
 
 export interface MapEngineOptions {
   center: { lat: number; lng: number };
   zoom: number;
   onViewportChange?: (bbox: Bbox) => void;
   onNeedClick?: (need: Need) => void;
+  onCenterClick?: (center: Center) => void;
 }
 
 /**
@@ -21,6 +22,12 @@ export interface MapEngine {
   upsertNeed(need: Need): void;
   /** Quita una necesidad del mapa (tiempo real). */
   removeNeed(id: string): void;
+  /** Reemplaza el conjunto de centros de acopio mostrados (capa distinta). */
+  setCenters(centers: Center[]): void;
+  /** Inserta o actualiza un centro de acopio (tiempo real). */
+  upsertCenter(center: Center): void;
+  /** Quita un centro de acopio del mapa (tiempo real). */
+  removeCenter(id: string): void;
   /** Activa el modo selección de zona; invoca el callback con la coordenada elegida. */
   enablePicker(onPick: (lat: number, lng: number) => void): void;
   destroy(): void;

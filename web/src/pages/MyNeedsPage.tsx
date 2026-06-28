@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../lib/api";
 import { useSession, useCategories } from "../App";
-import { IdentityGate } from "../components/IdentityGate";
+import { LoginPrompt } from "../components/LoginPrompt";
 import { t } from "../i18n";
 import type { Need } from "../lib/types";
 
@@ -37,12 +37,7 @@ export function MyNeedsPage() {
   }
 
   if (loading) return <div className="container">{t.common.loading}</div>;
-  if (!identityId)
-    return (
-      <div className="container">
-        <IdentityGate onAuthed={load} />
-      </div>
-    );
+  if (!identityId) return <LoginPrompt action="ver tus publicaciones" />;
 
   return (
     <div className="container">

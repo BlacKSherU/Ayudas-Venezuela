@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../lib/api";
 import { useSession } from "../App";
-import { IdentityGate } from "../components/IdentityGate";
+import { LoginPrompt } from "../components/LoginPrompt";
 import { ProductPicker } from "../components/ProductPicker";
 import { QuantityInput } from "../components/QuantityInput";
 import { MOVEMENT_LABEL } from "../lib/movements";
@@ -47,12 +47,7 @@ export function InventoryPage() {
   }
 
   if (loading) return <div className="container">Cargando…</div>;
-  if (!identityId)
-    return (
-      <div className="container">
-        <IdentityGate onAuthed={load} />
-      </div>
-    );
+  if (!identityId) return <LoginPrompt action="ver tu inventario" />;
 
   return (
     <div className="container">
@@ -115,7 +110,7 @@ export function InventoryPage() {
             {m.counterparty && (
               <>
                 {" · "}
-                <a href={`#/ledger?ref=${m.counterparty.ref}`}>{m.counterparty.publicName}</a>
+                <a href={`#/mapa?view=transparencia&ref=${m.counterparty.ref}`}>{m.counterparty.publicName}</a>
               </>
             )}
           </li>
