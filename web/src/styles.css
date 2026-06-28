@@ -292,6 +292,16 @@ textarea {
   }
 }
 
+/* Marcas de mapa personalizadas: sin el recuadro blanco por defecto de Leaflet. */
+.leaflet-div-icon.map-pin {
+  background: transparent;
+  border: none;
+}
+.map-pin svg {
+  display: block;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
+}
+
 /* ===== Feature 4: shell de 4 secciones + login único ===== */
 
 /* Cabecera con control único de sesión a la derecha. */

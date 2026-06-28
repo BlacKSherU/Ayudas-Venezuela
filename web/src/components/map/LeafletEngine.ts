@@ -1,24 +1,16 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { Bbox, Center, Need, Urgency } from "../../lib/types";
+import type { Bbox, Center, Need } from "../../lib/types";
 import type { MapEngine, MapEngineOptions } from "./MapEngine";
+import { needDivIcon, centerDivIcon } from "./markers";
 import { t } from "../../i18n";
-
-const URGENCY_COLOR: Record<Urgency, string> = {
-  alta: "#c0392b",
-  media: "#b9770e",
-  baja: "#0b6e4f",
-};
-
-// Color del centro de acopio (azul), distinto de las urgencias de necesidades.
-const CENTER_COLOR = "#1d4ed8";
 
 /** Implementación del MapEngine con Leaflet + tiles raster de OpenStreetMap. */
 export class LeafletEngine implements MapEngine {
   private map: L.Map | null = null;
   private layer = L.layerGroup();
   private centerLayer = L.layerGroup();
-  private markers = new Map<string, L.CircleMarker>();
+  private markers = new Map<string, L.Marker>();
   private centerMarkers = new Map<string, L.Marker>();
   private pickerMarker: L.Marker | null = null;
   private onNeedClick?: (need: Need) => void;
@@ -79,16 +71,15 @@ export class LeafletEngine implements MapEngine {
     const existing = this.markers.get(need.id);
     if (existing) {
       existing.setLatLng([need.zone.lat, need.zone.lng]);
-      existing.setStyle({ color: URGENCY_COLOR[need.urgency], fillColor: URGENCY_COLOR[need.urgency] });
+      existing.setIcon(needDivIcon(need));
       existing.bindPopup(popupHtml(need));
       return;
     }
-    const marker = L.circleMarker([need.zone.lat, need.zone.lng], {
-      radius: need.urgency === "alta" ? 10 : 8,
-      color: URGENCY_COLOR[need.urgency],
-      fillColor: URGENCY_COLOR[need.urgency],
-      fillOpacity: 0.7,
-      weight: 2,
+    const marker = L.marker([need.zone.lat, need.zone.lng], {
+      icon: needDivIcon(need),
+      title: t.map.title,
+      alt: `Necesidad (${need.urgency})`,
+      keyboard: true,
     });
     marker.bindPopup(popupHtml(need));
     marker.on("click", () => this.onNeedClick?.(need));
@@ -118,15 +109,9 @@ export class LeafletEngine implements MapEngine {
       existing.bindPopup(centerPopupHtml(center));
       return;
     }
-    // Marcador cuadrado azul (divIcon) para distinguir el centro de las necesidades (círculos).
-    const icon = L.divIcon({
-      className: "center-pin",
-      html: `<span style="display:block;width:14px;height:14px;background:${CENTER_COLOR};border:2px solid #fff;border-radius:3px;box-shadow:0 0 0 1px ${CENTER_COLOR}"></span>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    });
+    // Pin azul con icono de almacén para distinguir el centro de las necesidades.
     const marker = L.marker([center.location.lat, center.location.lng], {
-      icon,
+      icon: centerDivIcon(),
       title: center.name,
       keyboard: true,
       alt: `Centro de acopio: ${center.name}`,
@@ -168,7 +153,7 @@ export class LeafletEngine implements MapEngine {
 
 function centerPopupHtml(center: Center): string {
   const note = center.note ? `<br/>${escapeHtml(center.note)}` : "";
-  return `<strong>🏠 ${escapeHtml(center.name)}</strong><br/>Centro de acopio${note}`;
+  return `<strong>${escapeHtml(center.name)}</strong><br/>Centro de acopio${note}`;
 }
 
 function popupHtml(need: Need): string {
