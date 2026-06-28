@@ -33,8 +33,8 @@ export const t = {
   },
   form: {
     title: "Publicar una necesidad",
-    pickLocation: "Toca el mapa para marcar tu zona aproximada",
-    locationHelp: "Por tu seguridad, tu ubicación se muestra aproximada (no exacta).",
+    pickLocation: "Toca el mapa para marcar tu ubicación exacta",
+    locationHelp: "Marca el punto exacto para que la ayuda llegue al lugar correcto.",
     urgency: "Nivel de urgencia",
     items: "¿Qué insumos necesitas?",
     quantity: "Cantidad (opcional)",

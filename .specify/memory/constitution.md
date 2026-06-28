@@ -1,26 +1,25 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 → 1.1.0
-Bump rationale: Adición de una nueva sección de gobernanza sobre la interacción del
-asistente (preguntas mediante interfaz estructurada). Adición material de guía → MINOR.
+Version change: 1.1.0 → 2.0.0
+Bump rationale: Redefinición incompatible del Principio I (Dignidad y Protección): se
+ELIMINA la ofuscación de ubicación; las ubicaciones de necesidades y centros se muestran
+EXACTAS en el mapa público (decisión explícita de la persona responsable, feature 4).
+Cambio de regla no negociable → MAJOR.
 
-Modified principles: ninguno
-Added principles: ninguno
-Added sections:
-  - Interacción del Asistente y Toma de Decisiones (v1.1.0)
+Modified principles:
+  - I. Dignidad y Protección — ubicación pasa de "ofuscada/aproximada" a "EXACTA pública,
+    voluntaria y borrable"; identidad (cédula/fotos) sigue protegida.
+Previously added (v1.1.0): Interacción del Asistente y Toma de Decisiones
 Previously added (v1.0.0):
   - Principios I–V; Restricciones Técnicas y de Plataforma;
     Flujo de Desarrollo y Puertas de Calidad; Governance
 
 Templates requiring updates:
-  - ✅ .specify/templates/plan-template.md (Constitution Check es genérico; deriva
-       automáticamente de este archivo — sin cambios necesarios)
-  - ✅ .specify/templates/spec-template.md (sin referencias a principios codificadas)
-  - ✅ .specify/templates/tasks-template.md (sin referencias a principios codificadas)
-  - ✅ CLAUDE.md (regla de preguntas vía interfaz estructurada añadida)
+  - ✅ plan/spec/tasks templates (Constitution Check genérico; sin cambios)
+  - ✅ CLAUDE.md (sin cambios; sigue vigente)
 
-Follow-up TODOs: ninguno.
+Follow-up TODOs: comunicar en la UI que la ubicación será pública antes de publicar.
 -->
 
 # Constitución de Ayuda Venezuela
@@ -38,19 +37,25 @@ mercadeo. Toda decisión de diseño, producto o ingeniería DEBE priorizar su se
 privacidad y dignidad por encima de cualquier otra consideración.
 
 Reglas no negociables:
-- Los datos personales sensibles (ubicación exacta del hogar, nombres completos,
-  contacto, fotos de personas) DEBEN minimizarse, recolectarse solo cuando son
-  estrictamente necesarios para la entrega de ayuda, y nunca exponerse públicamente sin
-  consentimiento explícito e informado.
-- La ubicación de necesitados en el mapa público DEBE ofuscarse o agregarse (p. ej.
-  radio/zona aproximada) hasta que exista un emparejamiento confirmado con un donante.
+- Los datos de identidad sensibles (número y foto de cédula, nombres completos) DEBEN
+  cifrarse, usarse solo para fines de responsabilidad/auditoría y NUNCA exponerse
+  públicamente.
+- El contacto personal (teléfono/WhatsApp) solo se publica con consentimiento explícito e
+  informado de la persona.
+- **Ubicación (decisión del proyecto, v2.0.0)**: para facilitar ayuda directa y rápida en
+  emergencia, la **ubicación de necesidades y centros de acopio se muestra de forma EXACTA**
+  en el mapa público. La publicación es **voluntaria**: la persona decide publicar su punto y
+  puede **editar o borrar** su publicación en cualquier momento. La app DEBE comunicar con
+  claridad que la ubicación será pública antes de publicar.
 - El sistema DEBE permitir borrar o anonimizar los datos de una persona a solicitud, y
   no DEBE retener datos personales más allá del propósito humanitario que los justificó.
 - NUNCA se monetizan, venden ni ceden los datos de las personas a terceros.
 
-**Justificación**: En una catástrofe, exponer la ubicación o identidad de personas
-vulnerables puede facilitar robos, extorsión o violencia. La protección de la persona es
-la razón de ser del proyecto y prevalece sobre la conveniencia técnica.
+**Justificación**: En esta emergencia se priorizó la **velocidad y eficacia de la ayuda
+directa**: una ubicación exacta evita que los insumos se pierdan por imprecisión. El riesgo de
+exposición se mitiga con publicación voluntaria, posibilidad de borrado y no exponer otros
+datos personales (cédula/identidad siguen protegidos). Esta es una decisión explícita de la
+persona responsable del proyecto, que prevalece sobre la ofuscación anterior (v1.x).
 
 ### II. Acceso Directo Sin Intermediarios
 
@@ -140,15 +145,16 @@ y cero barreras de entrada; el código abierto permite confianza, auditoría y c
 - **Costo**: La arquitectura DEBE priorizar permanecer dentro de niveles de bajo costo o
   gratuitos siempre que sea compatible con la fiabilidad requerida.
 - **Privacidad por diseño**: Las decisiones de almacenamiento y APIs DEBEN aplicar
-  minimización de datos y ofuscación de ubicación conforme al Principio I.
+  minimización de datos personales conforme al Principio I. La identidad (cédula/fotos)
+  permanece cifrada; la ubicación es pública y exacta por decisión del proyecto (v2.0.0).
 
 ## Flujo de Desarrollo y Puertas de Calidad
 
 - **Prioridad de entrega**: Dado el contexto de emergencia, se favorece la entrega rápida
   de valor seguro. La velocidad NUNCA justifica violar el Principio I ni el V.
 - **Pruebas**: Las rutas críticas (crear necesidad, crear donación, emparejar, marcar
-  entregado, ofuscación de ubicación) DEBEN cubrirse con pruebas automatizadas antes de
-  considerarse listas para producción.
+  entregado, protección de identidad/cédula) DEBEN cubrirse con pruebas automatizadas antes
+  de considerarse listas para producción.
 - **Revisión**: Todo cambio DEBE verificar el cumplimiento de esta constitución; cualquier
   violación DEBE justificarse explícitamente o ser rechazada.
 - **Responsividad y accesibilidad**: Las vistas nuevas DEBEN validarse en viewport móvil y
@@ -194,4 +200,4 @@ conflicto entre un principio y una conveniencia de implementación, el principio
 - **Revisión periódica**: La constitución DEBE revisarse cuando cambie sustancialmente el
   alcance del proyecto o la fase de la emergencia.
 
-**Version**: 1.1.0 | **Ratified**: 2026-06-27 | **Last Amended**: 2026-06-27
+**Version**: 2.0.0 | **Ratified**: 2026-06-27 | **Last Amended**: 2026-06-28

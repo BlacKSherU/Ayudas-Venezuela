@@ -20,9 +20,9 @@ export function NeedLocationMap({ need }: { need: Need }) {
       if (!active || !ref.current) return;
       engine = e;
       engineRef.current = e;
-      e.mount(ref.current, { center: need.zone, zoom: 14 });
+      e.mount(ref.current, { center: need.zone, zoom: 16 });
       e.setNeeds([need]);
-      e.setView(need.zone.lat, need.zone.lng, 14);
+      e.setView(need.zone.lat, need.zone.lng, 16);
     })();
     return () => {
       active = false;
@@ -35,17 +35,16 @@ export function NeedLocationMap({ need }: { need: Need }) {
   return (
     <div style={{ margin: "0.5rem 0 1rem" }}>
       <p className="muted" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-        <MapPin size={14} aria-hidden="true" /> Zona aproximada de la necesidad
+        <MapPin size={14} aria-hidden="true" /> Ubicación de la necesidad
       </p>
       <div
         ref={ref}
         role="application"
-        aria-label="Zona aproximada de la necesidad"
+        aria-label="Ubicación de la necesidad"
         style={{ height: "240px", borderRadius: "10px", overflow: "hidden" }}
       />
       <p className="muted" style={{ marginTop: "0.4rem" }}>
-        Por privacidad se muestra la zona aproximada (no la dirección exacta). Coordina el punto
-        exacto con la persona.
+        Ubicación exacta del punto donde se necesita la ayuda.
       </p>
     </div>
   );

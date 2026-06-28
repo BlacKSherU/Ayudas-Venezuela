@@ -30,6 +30,8 @@ export interface MapEngine {
   removeCenter(id: string): void;
   /** Activa el modo selección de zona; invoca el callback con la coordenada elegida. */
   enablePicker(onPick: (lat: number, lng: number) => void): void;
+  /** Coloca/mueve el marcador del selector y centra el mapa (p. ej. "mi ubicación"). */
+  setPickerMarker(lat: number, lng: number, zoom?: number): void;
   destroy(): void;
 }
 

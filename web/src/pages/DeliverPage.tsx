@@ -180,7 +180,7 @@ export function OrdersList({ support }: { support: SupportProfile }) {
         mobileCard={(o) => (
           <div>
             <strong>{o.itemsText}</strong>
-            <div className="muted">Región {o.regionCode} · zona de recogida aproximada</div>
+            <div className="muted">Región {o.regionCode} · punto de recogida</div>
           </div>
         )}
       />

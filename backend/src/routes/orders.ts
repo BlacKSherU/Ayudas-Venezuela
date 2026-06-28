@@ -4,7 +4,7 @@ import type { Context } from "hono";
 import type { Env } from "../types";
 import { AppError, sendError } from "../lib/responses";
 import { getSessionIdentity } from "../lib/auth";
-import { isWithinVenezuela, obfuscate, resolveRegion } from "../domain/geo";
+import { isWithinVenezuela, resolveRegion } from "../domain/geo";
 import { canTransitionOrder } from "../domain/order-state";
 import { encryptCoord, decryptCoord } from "../lib/encryption";
 import { generateCode, hashCode, verifyCode } from "../lib/codes";
@@ -70,7 +70,7 @@ ordersRoutes.post("/", async (c) => {
     if (!isWithinVenezuela(pickupLocation.lat, pickupLocation.lng))
       throw new AppError("OUT_OF_BOUNDS", "Ubicación de recogida fuera de Venezuela", 400);
 
-    const pickupZone = obfuscate(pickupLocation.lat, pickupLocation.lng);
+    const pickupZone = { lat: pickupLocation.lat, lng: pickupLocation.lng };
     const regionCode = resolveRegion(pickupZone.lat, pickupZone.lng);
     const pickupExact = await encryptCoord(c.env, pickupLocation.lat, pickupLocation.lng);
 

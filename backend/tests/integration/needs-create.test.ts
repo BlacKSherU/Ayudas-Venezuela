@@ -24,10 +24,9 @@ describe("crear necesidad (US1)", () => {
       zone: { lat: number; lng: number };
     };
     expect(need.status).toBe("pendiente");
-    // La ubicación pública está ofuscada (no coincide con la exacta).
-    expect(need.zone.lat).not.toBe(CARACAS.lat);
-    expect(need.zone.lng).not.toBe(CARACAS.lng);
-    expect(Math.abs(need.zone.lat - CARACAS.lat)).toBeLessThan(0.02);
+    // Feature 4: la ubicación pública es EXACTA (coincide con la enviada, sin ofuscación).
+    expect(need.zone.lat).toBeCloseTo(CARACAS.lat, 5);
+    expect(need.zone.lng).toBeCloseTo(CARACAS.lng, 5);
   });
 
   it("exige consentimiento para publicar contacto público (FR-016)", async () => {

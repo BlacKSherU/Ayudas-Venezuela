@@ -61,3 +61,17 @@ export function centerDivIcon(): L.DivIcon {
     popupAnchor: [0, -34],
   });
 }
+
+// Glifo de "marcar punto": una cruz/mira centrada.
+const PICKER_GLYPH = '<path d="M12 2v20"/><path d="M2 12h20"/><circle cx="12" cy="12" r="3"/>';
+
+/** Pin del selector de ubicación (verde), con estilo propio (evita el marcador roto por defecto). */
+export function pickerDivIcon(): L.DivIcon {
+  return L.divIcon({
+    className: "map-pin picker-pin",
+    html: pinSvg("#0b6e4f", PICKER_GLYPH, true),
+    iconSize: [34, 46],
+    iconAnchor: [17, 45],
+    popupAnchor: [0, -40],
+  });
+}

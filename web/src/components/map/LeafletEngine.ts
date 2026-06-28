@@ -2,7 +2,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Bbox, Center, Need } from "../../lib/types";
 import type { MapEngine, MapEngineOptions } from "./MapEngine";
-import { needDivIcon, centerDivIcon } from "./markers";
+import { needDivIcon, centerDivIcon, pickerDivIcon } from "./markers";
 import { t } from "../../i18n";
 
 /** Implementación del MapEngine con Leaflet + tiles raster de OpenStreetMap. */
@@ -134,13 +134,25 @@ export class LeafletEngine implements MapEngine {
     if (!this.map) return;
     this.map.on("click", (e: L.LeafletMouseEvent) => {
       const { lat, lng } = e.latlng;
-      if (this.pickerMarker) {
-        this.pickerMarker.setLatLng([lat, lng]);
-      } else {
-        this.pickerMarker = L.marker([lat, lng]).addTo(this.map!);
-      }
+      this.placePicker(lat, lng);
       onPick(lat, lng);
     });
+  }
+
+  setPickerMarker(lat: number, lng: number, zoom?: number): void {
+    if (!this.map) return;
+    this.placePicker(lat, lng);
+    this.map.setView([lat, lng], zoom ?? this.map.getZoom());
+  }
+
+  private placePicker(lat: number, lng: number): void {
+    if (!this.map) return;
+    if (this.pickerMarker) {
+      this.pickerMarker.setLatLng([lat, lng]);
+    } else {
+      // Pin con estilo propio (evita el marcador roto por defecto de Leaflet con bundlers).
+      this.pickerMarker = L.marker([lat, lng], { icon: pickerDivIcon() }).addTo(this.map);
+    }
   }
 
   destroy(): void {

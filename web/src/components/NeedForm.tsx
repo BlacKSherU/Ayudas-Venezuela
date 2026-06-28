@@ -81,6 +81,10 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
         </p>
       )}
 
+      <p className="notice" style={{ marginBottom: "0.5rem" }}>
+        Tu ubicación se mostrará <strong>exacta y pública</strong> en el mapa para que la ayuda
+        llegue al lugar correcto. Puedes editar o borrar tu publicación cuando quieras.
+      </p>
       <MapPicker onPick={(lat, lng) => setLocation({ lat, lng })} />
 
       <label htmlFor="urgency">{t.form.urgency}</label>

@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Env, NeedStatus, Urgency } from "../types";
 import { AppError, sendError } from "../lib/responses";
 import { getSessionIdentity } from "../lib/auth";
-import { isWithinVenezuela, obfuscate, resolveRegion } from "../domain/geo";
+import { isWithinVenezuela, resolveRegion } from "../domain/geo";
 import { isValidCategory } from "../domain/categories";
 import { isRecentDuplicate } from "../lib/dedupe";
 import { encryptCoord } from "../lib/encryption";
@@ -120,11 +120,11 @@ needsRoutes.post("/", async (c) => {
       }
     }
 
-    // Validación geográfica + ofuscación (Principio I).
+    // Validación geográfica. Feature 4: ubicación EXACTA pública (sin ofuscación).
     if (!isWithinVenezuela(data.location.lat, data.location.lng)) {
       throw new AppError("OUT_OF_BOUNDS", "La ubicación está fuera de Venezuela", 400);
     }
-    const zone = obfuscate(data.location.lat, data.location.lng);
+    const zone = { lat: data.location.lat, lng: data.location.lng };
     const regionCode = resolveRegion(zone.lat, zone.lng);
 
     // Anti-abuso: duplicados recientes del mismo autor.
