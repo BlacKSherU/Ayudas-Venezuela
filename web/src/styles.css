@@ -626,3 +626,15 @@ nav.section-nav {
 @media (min-width: 640px) {
   .action-bar .btn { flex: 0 0 auto; }
 }
+
+/* Stepper (wizard por pasos en móvil). */
+.stepper-head { margin-bottom: 0.75rem; }
+.stepper-dots { display: flex; gap: 0.4rem; margin-bottom: 0.4rem; }
+.stepper-dots span { flex: 1; height: 5px; border-radius: 999px; background: var(--border); }
+.stepper-dots span.active { background: var(--green); }
+.stepper-dots span.done { background: var(--green-dark); }
+.stepper-label { margin: 0; }
+.stepper-nav { justify-content: space-between; }
+/* En escritorio, separar visualmente los pasos del formulario de una página. */
+.stepper-section + .stepper-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.stepper-section-title { font-size: 0.95rem; margin: 0 0 0.5rem; }

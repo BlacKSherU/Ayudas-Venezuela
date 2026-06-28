@@ -6,6 +6,7 @@ import { MediaCapture } from "../components/MediaCapture";
 import { DataTable, type ColumnDef } from "../components/table/DataTable";
 import { OrdersMap } from "../components/OrdersMap";
 import { DetailModal } from "../components/Modal";
+import { Stepper } from "../components/Stepper";
 import { formatDateTime } from "../lib/format";
 import { orderStatusLabel } from "../lib/orderStatus";
 import { setRoleTag, requestPushPermission } from "../lib/push";
@@ -55,18 +56,12 @@ export function SupportSignup({ onDone, presetRole }: { onDone: () => void; pres
     }
   }
 
-  return (
-    <form className="container card" onSubmit={submit}>
-      <h2>Quiero ser voluntario</h2>
-      <p className="muted">
+  const paso1 = (
+    <>
+      <p className="muted" style={{ marginTop: 0 }}>
         Tus datos de cédula se guardan cifrados y nunca son públicos; solo respaldan tu
         responsabilidad como voluntario.
       </p>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
       <label htmlFor="role">Tipo de voluntario</label>
       <select id="role" value={roleCode} onChange={(e) => setRoleCode(e.target.value)}>
         {(roles.length ? roles : [{ code: "transportista", labelEs: "Transportista", requiresCedula: true }]).map(
@@ -77,14 +72,40 @@ export function SupportSignup({ onDone, presetRole }: { onDone: () => void; pres
           ),
         )}
       </select>
-      <label htmlFor="cedula">Número de cédula</label>
+    </>
+  );
+
+  const paso2 = (
+    <>
+      <label htmlFor="cedula" style={{ marginTop: 0 }}>
+        Número de cédula
+      </label>
       <input id="cedula" value={cedula} onChange={(e) => setCedula(e.target.value)} required />
       <div style={{ margin: "0.75rem 0" }}>
         <MediaCapture label="Foto de la cédula" accept="image/*" onCapture={setPhoto} />
       </div>
-      <button className="btn" type="submit" disabled={busy}>
-        {busy ? "Registrando…" : "Registrarme"}
-      </button>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="action-bar">
+        <button className="btn" type="submit" disabled={busy}>
+          {busy ? "Registrando…" : "Registrarme"}
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <form className="container card" onSubmit={submit}>
+      <h2>Quiero ser voluntario</h2>
+      <Stepper
+        steps={[
+          { title: "Tipo de voluntario", content: paso1 },
+          { title: "Cédula", content: paso2 },
+        ]}
+      />
     </form>
   );
 }

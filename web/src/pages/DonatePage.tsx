@@ -5,6 +5,7 @@ import { LoginPrompt } from "../components/LoginPrompt";
 import { MapPicker } from "../components/MapPicker";
 import { NeedLocationMap } from "../components/NeedLocationMap";
 import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
+import { Stepper } from "../components/Stepper";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { MyCenter, Need } from "../lib/types";
@@ -160,57 +161,72 @@ export function DonatePage() {
           </div>
 
           {mode === "order" ? (
-            <>
-              <label htmlFor="pickup-source" style={{ marginTop: "0.75rem", display: "block" }}>
-                ¿Desde dónde recogerá el transportista?
-              </label>
-              <select
-                id="pickup-source"
-                value={pickupSource}
-                onChange={(e) => setPickupSource(e.target.value)}
-              >
-                <option value="punto">Marcar un punto en el mapa</option>
-                {centers.map((c) => (
-                  <option key={c.id} value={`centro:${c.id}`}>
-                    Desde mi centro: {c.name}
-                  </option>
-                ))}
-              </select>
+            <Stepper
+              steps={[
+                {
+                  title: "Origen de recogida",
+                  canAdvance: canPublish,
+                  content: (
+                    <>
+                      <label htmlFor="pickup-source" style={{ marginTop: 0, display: "block" }}>
+                        ¿Desde dónde recogerá el transportista?
+                      </label>
+                      <select
+                        id="pickup-source"
+                        value={pickupSource}
+                        onChange={(e) => setPickupSource(e.target.value)}
+                      >
+                        <option value="punto">Marcar un punto en el mapa</option>
+                        {centers.map((c) => (
+                          <option key={c.id} value={`centro:${c.id}`}>
+                            Desde mi centro: {c.name}
+                          </option>
+                        ))}
+                      </select>
 
-              {usingCenter ? (
-                <p className="muted" style={{ marginTop: "0.5rem" }}>
-                  La recogida será en la ubicación de tu centro de acopio.
-                </p>
-              ) : (
-                <>
-                  <p className="muted" style={{ marginTop: "0.75rem" }}>
-                    Marca dónde recogerá el transportista tus insumos:
-                  </p>
-                  <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
-                </>
-              )}
-
-              <label htmlFor="donor-contact" style={{ marginTop: "0.75rem", display: "block" }}>
-                Tu contacto para coordinar la recogida (opcional)
-              </label>
-              <input
-                id="donor-contact"
-                value={donorContact}
-                onChange={(e) => setDonorContact(e.target.value)}
-                placeholder="Ej.: WhatsApp +58…"
-                maxLength={200}
-              />
-              <p className="muted">El voluntario lo verá para coordinar contigo la recogida.</p>
-
-              <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                <button className="btn secondary" onClick={() => setSelected(null)}>
-                  Volver
-                </button>
-                <button className="btn" disabled={!canPublish || busy} onClick={publish}>
-                  {busy ? "Publicando…" : "Publicar orden de entrega"}
-                </button>
-              </div>
-            </>
+                      {usingCenter ? (
+                        <p className="muted" style={{ marginTop: "0.5rem" }}>
+                          La recogida será en la ubicación de tu centro de acopio.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="muted" style={{ marginTop: "0.75rem" }}>
+                            Marca dónde recogerá el transportista tus insumos:
+                          </p>
+                          <MapPicker initial={pickup ?? undefined} onPick={(lat, lng) => setPickup({ lat, lng })} />
+                        </>
+                      )}
+                    </>
+                  ),
+                },
+                {
+                  title: "Contacto y publicar",
+                  content: (
+                    <>
+                      <label htmlFor="donor-contact" style={{ marginTop: 0, display: "block" }}>
+                        Tu contacto para coordinar la recogida (opcional)
+                      </label>
+                      <input
+                        id="donor-contact"
+                        value={donorContact}
+                        onChange={(e) => setDonorContact(e.target.value)}
+                        placeholder="Ej.: WhatsApp +58…"
+                        maxLength={200}
+                      />
+                      <p className="muted">El voluntario lo verá para coordinar contigo la recogida.</p>
+                      <div className="action-bar">
+                        <button className="btn" disabled={!canPublish || busy} onClick={publish}>
+                          {busy ? "Publicando…" : "Publicar orden de entrega"}
+                        </button>
+                        <button className="btn secondary" onClick={() => setSelected(null)}>
+                          Volver
+                        </button>
+                      </div>
+                    </>
+                  ),
+                },
+              ]}
+            />
           ) : (
             <div style={{ marginTop: "0.75rem" }}>
               <DirectDeliveryForm needId={selected.id} onDone={() => setDirectDone(true)} />

@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useCategories } from "../App";
 import { MapPicker } from "./MapPicker";
 import { ProductPicker } from "./ProductPicker";
+import { Stepper } from "./Stepper";
 import { CategoryIcon } from "../lib/icons";
 import { t } from "../i18n";
 import type { Product, Urgency } from "../lib/types";
@@ -72,27 +73,22 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
     );
   }
 
-  return (
-    <form onSubmit={submit} className="card">
-      <h2>{t.form.title}</h2>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <p className="notice" style={{ marginBottom: "0.5rem" }}>
+  const ubicacion = (
+    <>
+      <p className="notice" style={{ marginTop: 0, marginBottom: "0.5rem" }}>
         Tu ubicación se mostrará <strong>exacta y pública</strong> en el mapa para que la ayuda
         llegue al lugar correcto. Puedes editar o borrar tu publicación cuando quieras.
       </p>
-      <MapPicker onPick={(lat, lng) => setLocation({ lat, lng })} />
+      <MapPicker initial={location ?? undefined} onPick={(lat, lng) => setLocation({ lat, lng })} />
+    </>
+  );
 
-      <label htmlFor="urgency">{t.form.urgency}</label>
-      <select
-        id="urgency"
-        value={urgency}
-        onChange={(e) => setUrgency(e.target.value as Urgency)}
-      >
+  const insumos = (
+    <>
+      <label htmlFor="urgency" style={{ marginTop: 0 }}>
+        {t.form.urgency}
+      </label>
+      <select id="urgency" value={urgency} onChange={(e) => setUrgency(e.target.value as Urgency)}>
         <option value="alta">{t.urgency.alta}</option>
         <option value="media">{t.urgency.media}</option>
         <option value="baja">{t.urgency.baja}</option>
@@ -154,8 +150,14 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
           </div>
         )}
       </fieldset>
+    </>
+  );
 
-      <label htmlFor="note">{t.form.note}</label>
+  const detalle = (
+    <>
+      <label htmlFor="note" style={{ marginTop: 0 }}>
+        {t.form.note}
+      </label>
       <textarea
         id="note"
         maxLength={280}
@@ -186,11 +188,33 @@ export function NeedForm({ onPublished }: { onPublished?: () => void }) {
         </div>
       )}
 
-      <div style={{ marginTop: "1rem" }}>
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="action-bar">
         <button className="btn" type="submit" disabled={busy}>
           {busy ? t.form.submitting : t.form.submit}
         </button>
       </div>
+    </>
+  );
+
+  return (
+    <form onSubmit={submit} className="card">
+      <h2>{t.form.title}</h2>
+      <Stepper
+        steps={[
+          { title: "Ubicación", content: ubicacion, canAdvance: !!location },
+          {
+            title: "Urgencia e insumos",
+            content: insumos,
+            canAdvance: selected.size > 0 || products.length > 0,
+          },
+          { title: "Nota y contacto", content: detalle },
+        ]}
+      />
     </form>
   );
 }

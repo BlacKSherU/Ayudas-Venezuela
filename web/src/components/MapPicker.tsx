@@ -4,13 +4,20 @@ import { createMapEngine, type MapEngine } from "./map/MapEngine";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { t } from "../i18n";
 
-/** Selector de ubicación exacta en el mapa (US1). Permite tocar el mapa o usar mi ubicación. */
-export function MapPicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+/** Selector de ubicación exacta en el mapa (US1). Permite tocar el mapa o usar mi ubicación.
+ *  `initial` reposiciona el marcador al montar (p. ej. al volver a un paso del wizard o editar). */
+export function MapPicker({
+  onPick,
+  initial,
+}: {
+  onPick: (lat: number, lng: number) => void;
+  initial?: { lat: number; lng: number };
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const engineRef = useRef<MapEngine | null>(null);
   const geo = useGeolocation();
   const [locating, setLocating] = useState(false);
-  const [picked, setPicked] = useState(false);
+  const [picked, setPicked] = useState(!!initial);
 
   useEffect(() => {
     let active = true;
@@ -20,11 +27,12 @@ export function MapPicker({ onPick }: { onPick: (lat: number, lng: number) => vo
       if (!active || !ref.current) return;
       engine = e;
       engineRef.current = e;
-      e.mount(ref.current, { center: geo.center, zoom: geo.zoom });
+      e.mount(ref.current, { center: initial ?? geo.center, zoom: initial ? 16 : geo.zoom });
       e.enablePicker((lat, lng) => {
         setPicked(true);
         onPick(lat, lng);
       });
+      if (initial) e.setPickerMarker(initial.lat, initial.lng, 16);
     })();
     return () => {
       active = false;
@@ -34,9 +42,11 @@ export function MapPicker({ onPick }: { onPick: (lat: number, lng: number) => vo
     // eslint-disable-next-line
   }, []);
 
-  // Recenter cuando llega la ubicación del usuario.
+  // Recenter cuando llega la ubicación del usuario (solo si no hay punto inicial/elegido).
   useEffect(() => {
-    if (geo.status === "ok") engineRef.current?.setView(geo.center.lat, geo.center.lng, 15);
+    if (!initial && !picked && geo.status === "ok")
+      engineRef.current?.setView(geo.center.lat, geo.center.lng, 15);
+    // eslint-disable-next-line
   }, [geo.status, geo.center.lat, geo.center.lng]);
 
   function useMyLocation() {
