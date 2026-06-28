@@ -55,15 +55,20 @@ export function PublicLedgerPage() {
     );
 
   return (
-    <div className="container">
+    <div className="container wide">
       <h2>Inventario público de {owner}</h2>
       <p className="muted">Registro público e imborrable (auditoría abierta).</p>
 
-      <h3 style={{ fontSize: "1rem" }}>Saldos</h3>
-      <BalancesTable balances={balances} />
-
-      <h3 style={{ fontSize: "1rem", marginTop: "1.5rem" }}>Libro de movimientos</h3>
-      <MovementsTable movements={movements} />
+      <div className="ledger-grid">
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>Saldos</h3>
+          <BalancesTable balances={balances} />
+        </section>
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>Libro de movimientos</h3>
+          <MovementsTable movements={movements} />
+        </section>
+      </div>
     </div>
   );
 }

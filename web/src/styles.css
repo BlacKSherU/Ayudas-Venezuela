@@ -595,3 +595,10 @@ nav.section-nav {
 @media (min-width: 900px) {
   .dist-grid { grid-template-columns: 1fr 1fr; align-items: start; }
 }
+
+/* Saldos | Movimientos lado a lado en PC (Transparencia e Inventario). */
+.ledger-grid { display: grid; gap: 1.5rem; }
+.ledger-grid h3 { margin-top: 0; }
+@media (min-width: 900px) {
+  .ledger-grid { grid-template-columns: minmax(260px, 1fr) 1.7fr; align-items: start; }
+}

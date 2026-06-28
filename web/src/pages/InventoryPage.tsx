@@ -51,46 +51,54 @@ export function InventoryPage() {
   if (!identityId) return <LoginPrompt action="ver tu inventario" />;
 
   return (
-    <div className="container">
+    <div className="container wide">
       <h2>Mi inventario</h2>
       <p className="muted">
         Tu inventario y sus movimientos son <strong>públicos</strong> (transparencia). Los
         registros no se borran.
       </p>
 
-      <div className="card">
-        <label>Nombre público (cómo te ven los demás)</label>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <input value={publicName} onChange={(e) => setPublicNameState(e.target.value)} placeholder="Real o seudónimo" />
-          <button className="btn secondary" onClick={() => api.setPublicName(publicName || null)}>
-            Guardar
-          </button>
+      <div className="dist-grid">
+        <div className="card" style={{ margin: 0 }}>
+          <label>Nombre público (cómo te ven los demás)</label>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <input value={publicName} onChange={(e) => setPublicNameState(e.target.value)} placeholder="Real o seudónimo" />
+            <button className="btn secondary" onClick={() => api.setPublicName(publicName || null)}>
+              Guardar
+            </button>
+          </div>
+        </div>
+
+        <div className="card" style={{ margin: 0 }}>
+          <h3 style={{ fontSize: "1rem", marginTop: 0 }}>Agregar producto</h3>
+          {!picked ? (
+            <ProductPicker onPick={(p) => { setPicked(p); setUnit(p.baseUnit); }} />
+          ) : (
+            <>
+              <p>
+                <strong>{picked.name}</strong>
+              </p>
+              <QuantityInput dimension={picked.dimension} qty={qty} unit={unit} onQty={setQty} onUnit={setUnit} />
+              <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
+                <button className="btn secondary" onClick={() => setPicked(null)}>Cambiar</button>
+                <button className="btn" onClick={addItem}>Agregar al inventario</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
+      <div style={{ height: "1rem" }} />
 
-      <div className="card">
-        <h3 style={{ fontSize: "1rem" }}>Agregar producto</h3>
-        {!picked ? (
-          <ProductPicker onPick={(p) => { setPicked(p); setUnit(p.baseUnit); }} />
-        ) : (
-          <>
-            <p>
-              <strong>{picked.name}</strong>
-            </p>
-            <QuantityInput dimension={picked.dimension} qty={qty} unit={unit} onQty={setQty} onUnit={setUnit} />
-            <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-              <button className="btn secondary" onClick={() => setPicked(null)}>Cambiar</button>
-              <button className="btn" onClick={addItem}>Agregar al inventario</button>
-            </div>
-          </>
-        )}
+      <div className="ledger-grid">
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>Saldos</h3>
+          <BalancesTable balances={balances} onDecrease={decrease} />
+        </section>
+        <section>
+          <h3 style={{ fontSize: "1rem" }}>Libro de movimientos</h3>
+          <MovementsTable movements={movements} />
+        </section>
       </div>
-
-      <h3 style={{ fontSize: "1rem" }}>Saldos</h3>
-      <BalancesTable balances={balances} onDecrease={decrease} />
-
-      <h3 style={{ fontSize: "1rem", marginTop: "1.5rem" }}>Libro de movimientos</h3>
-      <MovementsTable movements={movements} />
     </div>
   );
 }
