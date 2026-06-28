@@ -12,7 +12,7 @@
     // Origen del frontend (Cloudflare Pages) permitido por CORS.
     // Para desarrollo local, sobrescribir en .dev.vars (ENVIRONMENT, ALLOWED_ORIGIN).
     "ALLOWED_ORIGIN": "https://ayuda-venezuela-cpe.pages.dev",
-    "EMAIL_FROM": "no-reply@ayuda-venezuela.org",
+    "EMAIL_FROM": "tramitesgarciamiguel@gmail.com",
     // App ID público de OneSignal (la REST API Key va como secret ONESIGNAL_API_KEY).
     "ONESIGNAL_APP_ID": "aae84b7b-a9bd-4a8e-8c03-7dadc067be66"
   },
