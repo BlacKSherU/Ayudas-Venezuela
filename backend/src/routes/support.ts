@@ -5,7 +5,12 @@ import { AppError, sendError } from "../lib/responses";
 import { getSessionIdentity } from "../lib/auth";
 import { isValidRole } from "../domain/roles";
 import { encryptText } from "../lib/encryption";
-import { createSupport, getSupportByIdentity } from "../db/logistics-queries";
+import {
+  createSupport,
+  getSupportByIdentity,
+  getSupportByIdentityAndRole,
+  getSupportRolesByIdentity,
+} from "../db/logistics-queries";
 
 export const supportRoutes = new Hono<{ Bindings: Env }>();
 
@@ -28,8 +33,10 @@ supportRoutes.post("/register", async (c) => {
     if (!(await isValidRole(c.env, data.roleCode)))
       throw new AppError("INVALID_ROLE", "Rol no válido", 400);
 
-    const existing = await getSupportByIdentity(c.env, identityId);
-    if (existing) throw new AppError("ALREADY_REGISTERED", "Ya tienes un perfil de apoyo", 409);
+    // Feature 4: multi-rol. Se permite registrar varios roles de voluntario; la unicidad es
+    // por identidad+rol (no se puede registrar dos veces el mismo rol).
+    const existing = await getSupportByIdentityAndRole(c.env, identityId, data.roleCode);
+    if (existing) throw new AppError("ALREADY_REGISTERED", "Ya tienes ese rol de voluntario", 409);
 
     const enc = await encryptText(c.env, data.cedulaNumber.trim());
     const supportId = await createSupport(c.env, {
@@ -47,20 +54,31 @@ supportRoutes.post("/register", async (c) => {
   }
 });
 
-// GET /support/me — perfil propio de apoyo (sin exponer la cédula).
+function toSupportPublic(s: Awaited<ReturnType<typeof getSupportByIdentity>>) {
+  return s
+    ? {
+        id: s.id,
+        roleCode: s.role_code,
+        status: s.status,
+        ratingAvg: s.rating_avg,
+        ratingCount: s.rating_count,
+        deliveriesDone: s.deliveries_done,
+      }
+    : null;
+}
+
+// GET /support/me — primer perfil propio de apoyo (compatibilidad; sin exponer la cédula).
 supportRoutes.get("/me", async (c) => {
   const identityId = await getSessionIdentity(c);
   if (!identityId) return c.json({ support: null });
   const s = await getSupportByIdentity(c.env, identityId);
-  if (!s) return c.json({ support: null });
-  return c.json({
-    support: {
-      id: s.id,
-      roleCode: s.role_code,
-      status: s.status,
-      ratingAvg: s.rating_avg,
-      ratingCount: s.rating_count,
-      deliveriesDone: s.deliveries_done,
-    },
-  });
+  return c.json({ support: toSupportPublic(s) });
+});
+
+// GET /support/mine — TODOS los roles de voluntario del usuario (feature 4: selector de rol).
+supportRoutes.get("/mine", async (c) => {
+  const identityId = await getSessionIdentity(c);
+  if (!identityId) return c.json({ roles: [] });
+  const rows = await getSupportRolesByIdentity(c.env, identityId);
+  return c.json({ roles: rows.map(toSupportPublic) });
 });

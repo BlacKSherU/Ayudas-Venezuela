@@ -39,6 +39,16 @@ export function MapPage() {
     }
   }, []);
 
+  // Feature 4: capa de centros de acopio (puntos públicos con ubicación exacta).
+  const fetchCenters = useCallback(async (bbox: Bbox) => {
+    try {
+      const r = await api.listCenters(bbox);
+      engineRef.current?.setCenters(r.centers);
+    } catch {
+      /* Mantener el estado actual ante error de red. */
+    }
+  }, []);
+
   const matchesFilters = (need: Need): boolean => {
     const f = filtersRef.current;
     return (
@@ -61,6 +71,10 @@ export function MapPage() {
       } else if (ev.type === "need.closed") {
         engineRef.current?.removeNeed(ev.id);
         setNeeds((prev) => prev.filter((n) => n.id !== ev.id));
+      } else if (ev.type === "center.created") {
+        engineRef.current?.upsertCenter(ev.center);
+      } else if (ev.type === "center.removed") {
+        engineRef.current?.removeCenter(ev.id);
       }
     },
     onStatusChange: setOnline,
@@ -81,6 +95,7 @@ export function MapPage() {
         onViewportChange: (bbox) => {
           bboxRef.current = bbox;
           void fetchSnapshot(bbox);
+          void fetchCenters(bbox);
           updateBbox(bbox);
         },
       });

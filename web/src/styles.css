@@ -28,11 +28,16 @@ body {
   color: var(--text);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
+  /* Mobile-first: la página nunca debe desplazarse horizontalmente. */
+  overflow-x: hidden;
 }
 
 #root {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Accesibilidad: foco visible para navegación por teclado (WCAG 2.1 AA). */
@@ -285,4 +290,185 @@ textarea {
   .map-wrap {
     min-height: 70vh;
   }
+}
+
+/* ===== Feature 4: shell de 4 secciones + login único ===== */
+
+/* Cabecera con control único de sesión a la derecha. */
+.app-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+/* El bloque de título encoge para que el botón de sesión nunca desborde. */
+.app-bar-row > div {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.app-bar h1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+}
+header.app-bar .login-btn {
+  background: #fff;
+  color: var(--green-dark);
+  border: none;
+}
+header.app-bar .login-btn.secondary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.login-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.login-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: #fff;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+/* En pantallas muy estrechas, basta el botón de cerrar sesión (sin la etiqueta). */
+@media (max-width: 380px) {
+  .login-id span,
+  .app-bar p {
+    display: none;
+  }
+}
+
+/* Navegación principal de secciones: icono sobre etiqueta. Las 4 reparten el ancho y NO
+   provocan scroll horizontal (mobile-first); la etiqueta puede ajustarse en 2 líneas. */
+nav.section-nav {
+  width: 100%;
+}
+.section-tab {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.6rem 0.2rem !important;
+  font-size: 0.72rem !important;
+  line-height: 1.1;
+}
+.section-tab span {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* Sub-navegación dentro de una sección (vistas). */
+.subnav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.subnav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: 40px;
+}
+.subnav-tab[aria-selected="true"] {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* Encabezado de sección y barra de voluntario. */
+.section-header {
+  padding-top: 1rem;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.25rem;
+}
+.volunteer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+.role-single {
+  margin: 0;
+}
+.add-role-btn {
+  white-space: nowrap;
+}
+
+/* Aviso de login dentro de las páginas. */
+.login-prompt {
+  text-align: center;
+}
+.login-prompt .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+/* Modal de login global. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+.modal {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-close {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  z-index: 1;
+  min-height: 44px;
+  min-width: 44px;
 }

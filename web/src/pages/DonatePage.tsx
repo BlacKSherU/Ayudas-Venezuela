@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../lib/api";
 import { useSession, useCategories } from "../App";
-import { IdentityGate } from "../components/IdentityGate";
+import { LoginPrompt } from "../components/LoginPrompt";
 import { MapPicker } from "../components/MapPicker";
 import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
-import type { Need } from "../lib/types";
+import type { MyCenter, Need } from "../lib/types";
 
 /** US2: el donante elige una necesidad pendiente y publica una orden de entrega. */
 export function DonatePage() {
@@ -16,6 +16,9 @@ export function DonatePage() {
   const [selected, setSelected] = useState<Need | null>(null);
   const [mode, setMode] = useState<"order" | "direct">("order");
   const [pickup, setPickup] = useState<{ lat: number; lng: number } | null>(null);
+  const [centers, setCenters] = useState<MyCenter[]>([]);
+  // Origen de recogida: un centro propio ("centro:<id>") o un punto en el mapa ("punto").
+  const [pickupSource, setPickupSource] = useState<string>("punto");
   const [codes, setCodes] = useState<{ pickupCode: string; dropoffCode: string } | null>(null);
   const [directDone, setDirectDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,14 +39,25 @@ export function DonatePage() {
       })
       .then((r) => setNeeds(r.needs))
       .catch(() => setNeeds([]));
+    // Centros propios (opcional): permiten donar usando su ubicación como punto de recogida.
+    api
+      .myCenters()
+      .then((r) => setCenters(r.centers.filter((c) => c.status === "activo")))
+      .catch(() => setCenters([]));
   }, [identityId]);
 
+  const usingCenter = pickupSource.startsWith("centro:");
+  const canPublish = usingCenter || !!pickup;
+
   async function publish() {
-    if (!selected || !pickup) return;
+    if (!selected || !canPublish) return;
     setBusy(true);
     setError(null);
     try {
-      const r = await api.createOrder({ needId: selected.id, pickupLocation: pickup });
+      const input = usingCenter
+        ? { needId: selected.id, centerId: pickupSource.slice("centro:".length) }
+        : { needId: selected.id, pickupLocation: pickup! };
+      const r = await api.createOrder(input);
       setCodes({ pickupCode: r.pickupCode, dropoffCode: r.dropoffCode });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo publicar la orden");
@@ -53,12 +67,7 @@ export function DonatePage() {
   }
 
   if (loading) return <div className="container">Cargando…</div>;
-  if (!identityId)
-    return (
-      <div className="container">
-        <IdentityGate />
-      </div>
-    );
+  if (!identityId) return <LoginPrompt action="donar" />;
 
   if (directDone)
     return (
@@ -130,15 +139,40 @@ export function DonatePage() {
 
           {mode === "order" ? (
             <>
-              <p className="muted" style={{ marginTop: "0.75rem" }}>
-                Marca dónde recogerá el transportista tus insumos:
-              </p>
-              <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
+              <label htmlFor="pickup-source" style={{ marginTop: "0.75rem", display: "block" }}>
+                ¿Desde dónde recogerá el transportista?
+              </label>
+              <select
+                id="pickup-source"
+                value={pickupSource}
+                onChange={(e) => setPickupSource(e.target.value)}
+              >
+                <option value="punto">Marcar un punto en el mapa</option>
+                {centers.map((c) => (
+                  <option key={c.id} value={`centro:${c.id}`}>
+                    Desde mi centro: {c.name}
+                  </option>
+                ))}
+              </select>
+
+              {usingCenter ? (
+                <p className="muted" style={{ marginTop: "0.5rem" }}>
+                  La recogida será en la ubicación de tu centro de acopio.
+                </p>
+              ) : (
+                <>
+                  <p className="muted" style={{ marginTop: "0.75rem" }}>
+                    Marca dónde recogerá el transportista tus insumos:
+                  </p>
+                  <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
+                </>
+              )}
+
               <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
                 <button className="btn secondary" onClick={() => setSelected(null)}>
                   Volver
                 </button>
-                <button className="btn" disabled={!pickup || busy} onClick={publish}>
+                <button className="btn" disabled={!canPublish || busy} onClick={publish}>
                   {busy ? "Publicando…" : "Publicar orden de entrega"}
                 </button>
               </div>

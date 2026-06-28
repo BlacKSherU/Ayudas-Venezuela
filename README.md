@@ -46,6 +46,13 @@ npm run dev:web       # Frontend (Vite)
   pasos integrada con las entregas; unidades con conversiones; vista de distribución
   (oferta vs demanda). El inventario se actualiza por recarga tras cada acción (el tiempo real
   por Durable Object queda como mejora futura).
+- **Feature 4** — Reorganización en **4 secciones** (Mapa, Centros de acopio, Necesitados,
+  Voluntarios) con **login único global** en la cabecera. La sección **Voluntarios** muestra
+  una **interfaz por rol** (repartidor/transportista) con **selector** para quien tenga varios,
+  y es extensible a nuevos tipos. **Centros de acopio** añade una entidad opcional con
+  **ubicación exacta pública** que aparece como punto en el mapa (registro abierto + anti-abuso);
+  donar como individuo sigue funcionando sin centro. Distribución y Transparencia viven como
+  sub-vistas del Mapa. Las rutas previas redirigen para no romper enlaces.
 
 ## Principios no negociables
 
