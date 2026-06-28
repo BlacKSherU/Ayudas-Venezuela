@@ -99,7 +99,7 @@ const PICKER_GLYPH = '<path d="M12 2v20"/><path d="M2 12h20"/><circle cx="12" cy
 export function pickerDivIcon(): L.DivIcon {
   return L.divIcon({
     className: "map-pin picker-pin",
-    html: pinSvg("#0b6e4f", PICKER_GLYPH, true),
+    html: pinSvg("#1d4ed8", PICKER_GLYPH, true),
     iconSize: [34, 46],
     iconAnchor: [17, 45],
     popupAnchor: [0, -40],

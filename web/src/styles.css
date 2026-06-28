@@ -1,6 +1,8 @@
 :root {
-  --green: #0b6e4f;
-  --green-dark: #084d37;
+  /* Marca azul (Comando Con Venezuela). Se conservan los nombres --green/--green-dark para no
+     tocar todas las reglas; ahora valen azul royal y navy. */
+  --green: #1d4ed8;
+  --green-dark: #16329e;
   --red: #c0392b;
   --amber: #b9770e;
   --bg: #f7f7f5;
@@ -232,8 +234,9 @@ textarea {
   color: var(--amber);
 }
 .badge.baja {
+  /* Semáforo de urgencia (semántico): "baja" sigue en verde, independiente de la marca. */
   background: #e8f5e9;
-  color: var(--green-dark);
+  color: #0b6e4f;
 }
 
 .warning {
@@ -244,8 +247,8 @@ textarea {
   font-size: 0.85rem;
 }
 .notice {
-  background: #e8f5e9;
-  border: 1px solid #b6e0bd;
+  background: #e7eefc;
+  border: 1px solid #b9ccf5;
   border-radius: 8px;
   padding: 0.6rem;
   font-size: 0.9rem;
@@ -616,3 +619,10 @@ nav.section-nav {
   font-size: 0.85rem;
 }
 .leaflet-donate-btn:hover { background: var(--green-dark); }
+
+/* Barra de acciones: todos los botones al mismo nivel (abajo). */
+.action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+.action-bar .btn { flex: 1 1 auto; }
+@media (min-width: 640px) {
+  .action-bar .btn { flex: 0 0 auto; }
+}

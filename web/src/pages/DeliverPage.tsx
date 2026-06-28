@@ -335,9 +335,6 @@ function OrderFlow({
             )}
             <label>Código de recogida (te lo da el donante)</label>
             <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
-            <button className="btn" style={{ marginTop: "0.5rem" }} disabled={busy} onClick={() => advance("pickup")}>
-              Confirmar recogida
-            </button>
           </>
         )}
 
@@ -351,9 +348,6 @@ function OrderFlow({
             </p>
             <label>Código de entrega (te lo da la persona necesitada)</label>
             <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
-            <button className="btn" style={{ marginTop: "0.5rem" }} disabled={busy} onClick={() => advance("deliver")}>
-              Confirmar entrega
-            </button>
           </>
         )}
 
@@ -370,10 +364,18 @@ function OrderFlow({
         )}
       </div>
 
-      <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <button className="btn secondary" onClick={onClose}>
-          Volver a órdenes
-        </button>
+      {/* Todas las acciones abajo, al mismo nivel. */}
+      <div className="action-bar">
+        {order.status === "tomada" && (
+          <button className="btn" disabled={busy} onClick={() => advance("pickup")}>
+            Confirmar recogida
+          </button>
+        )}
+        {(order.status === "recogida" || order.status === "en_camino") && (
+          <button className="btn" disabled={busy} onClick={() => advance("deliver")}>
+            Confirmar entrega
+          </button>
+        )}
         {(order.status === "tomada" || order.status === "recogida" || order.status === "en_camino") && (
           <button
             className="btn danger"
@@ -394,6 +396,9 @@ function OrderFlow({
             Liberar orden
           </button>
         )}
+        <button className="btn secondary" onClick={onClose}>
+          Volver a órdenes
+        </button>
       </div>
     </div>
   );
