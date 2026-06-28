@@ -7,6 +7,7 @@ import { DataTable, type ColumnDef } from "../components/table/DataTable";
 import { OrdersMap } from "../components/OrdersMap";
 import { DetailModal } from "../components/Modal";
 import { formatDateTime } from "../lib/format";
+import { orderStatusLabel } from "../lib/orderStatus";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Need, Order, SupportProfile, SupportRole } from "../lib/types";
 
@@ -122,6 +123,28 @@ export function OrdersList({ support }: { support: SupportProfile }) {
     void refresh();
   }, [refresh]);
 
+  // Reanudar: si tengo una orden en curso (reservada/recogida/en camino), la recupero al volver.
+  useEffect(() => {
+    let cancel = false;
+    api
+      .activeOrders()
+      .then(async (r) => {
+        const o = r.orders[0];
+        if (!o || cancel) return;
+        let dropoffExact: { lat: number; lng: number } | null = null;
+        try {
+          dropoffExact = (await api.getNeed(o.needId)).zone;
+        } catch {
+          /* sin destino si falla */
+        }
+        if (!cancel) setActive({ order: o, pickupExact: o.pickupZone, dropoffExact });
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
   // Al abrir el detalle, carga la necesidad (destino + contacto del necesitado).
   useEffect(() => {
     if (!detail) {
@@ -234,7 +257,7 @@ export function OrdersList({ support }: { support: SupportProfile }) {
                 { label: "Contacto del donante", value: detail.donorContact ?? "—" },
                 { label: "Contacto del necesitado", value: detailNeed?.contactPublic ?? "—" },
                 { label: "Región", value: detail.regionCode },
-                { label: "Estado", value: detail.status },
+                { label: "Estado", value: orderStatusLabel(detail.status) },
                 { label: "Actualizada", value: formatDateTime(detail.updatedAt) },
               ]
             : []
@@ -290,7 +313,13 @@ function OrderFlow({
   return (
     <div className="container card">
       <h2>Entrega en curso</h2>
-      <p className="muted">Estado: {order.status}</p>
+      <p className="muted">Estado: {orderStatusLabel(order.status)}</p>
+      {order.status === "tomada" && (
+        <p className="notice">
+          Reservada para ti. Aún no está confirmada: se confirma cuando verifiques el código de
+          recogida con el donante.
+        </p>
+      )}
 
       {order.status === "tomada" && (
         <>
@@ -338,10 +367,30 @@ function OrderFlow({
           {error}
         </p>
       )}
-      <div style={{ marginTop: "1rem" }}>
+      <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
         <button className="btn secondary" onClick={onClose}>
           Volver a órdenes
         </button>
+        {(order.status === "tomada" || order.status === "recogida" || order.status === "en_camino") && (
+          <button
+            className="btn danger"
+            disabled={busy}
+            onClick={async () => {
+              if (!window.confirm("¿Liberar esta orden para que otro voluntario la tome?")) return;
+              setBusy(true);
+              try {
+                await api.releaseOrder(order.id);
+                onClose();
+              } catch (err) {
+                setError(err instanceof ApiError ? err.message : "No se pudo liberar");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Liberar orden
+          </button>
+        )}
       </div>
     </div>
   );

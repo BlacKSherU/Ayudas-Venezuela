@@ -21,7 +21,10 @@ import {
   getOrderPublic,
   getOrderRow,
   getSupportByIdentity,
+  listActiveOrdersBySupport,
   listAvailableOrders,
+  listIncomingOrders,
+  listOrdersByDonor,
   releaseOrder,
   setOrderStatus,
   takeOrder,
@@ -108,6 +111,8 @@ ordersRoutes.post("/", async (c) => {
       })),
       centerId: centerId ?? null,
       donorContact: donorContact?.trim() || null,
+      pickupCode,
+      dropoffCode,
       now,
     });
 
@@ -332,6 +337,38 @@ ordersRoutes.post("/:id/release", async (c) => {
     await releaseOrder(c.env, id, now);
     await broadcastToOrder(c.env, id, { type: "order.status", status: "disponible", at: now });
     return c.json({ order: await getOrderPublic(c.env, id) });
+  } catch (err) {
+    return sendError(c, err);
+  }
+});
+
+// GET /orders/mine — órdenes que publiqué (donante): con código de recogida + estado.
+ordersRoutes.get("/mine", async (c) => {
+  try {
+    const identityId = await requireSession(c);
+    return c.json({ orders: await listOrdersByDonor(c.env, identityId) });
+  } catch (err) {
+    return sendError(c, err);
+  }
+});
+
+// GET /orders/incoming — órdenes hacia mis necesidades (necesitado): con código de entrega.
+ordersRoutes.get("/incoming", async (c) => {
+  try {
+    const identityId = await requireSession(c);
+    return c.json({ orders: await listIncomingOrders(c.env, identityId) });
+  } catch (err) {
+    return sendError(c, err);
+  }
+});
+
+// GET /orders/active — órdenes en curso del repartilor (para reanudar al volver).
+ordersRoutes.get("/active", async (c) => {
+  try {
+    const identityId = await requireSession(c);
+    const support = await getSupportByIdentity(c.env, identityId);
+    if (!support) return c.json({ orders: [] });
+    return c.json({ orders: await listActiveOrdersBySupport(c.env, support.id) });
   } catch (err) {
     return sendError(c, err);
   }

@@ -149,6 +149,15 @@ export const api = {
     request<{ order: Order }>(`/orders/${id}/deliver`, { method: "POST", body: JSON.stringify({ code }) }),
   releaseOrder: (id: string) => request<{ order: Order }>(`/orders/${id}/release`, { method: "POST" }),
 
+  // Feature 4: seguimiento de órdenes
+  /** Órdenes que publiqué (donante), con código de recogida + estado. */
+  myOrders: () => request<{ orders: (Order & { pickupCode: string | null })[] }>("/orders/mine"),
+  /** Órdenes dirigidas a mis necesidades (necesitado), con código de entrega + estado. */
+  incomingOrders: () =>
+    request<{ orders: (Order & { dropoffCode: string | null })[] }>("/orders/incoming"),
+  /** Órdenes en curso asignadas a mí (repartidor), para reanudar. */
+  activeOrders: () => request<{ orders: Order[] }>("/orders/active"),
+
   roles: () => request<{ roles: SupportRole[] }>("/catalog/roles"),
 
   // --- Feature 3: catálogo de productos, inventario, distribución ---

@@ -114,6 +114,8 @@ export interface OrderRow {
   dropoff_code_hash: string;
   eta_ms: number | null;
   donor_contact: string | null;
+  pickup_code: string | null;
+  dropoff_code: string | null;
   created_at: number;
   updated_at: number;
   taken_at: number | null;
@@ -183,6 +185,8 @@ export interface CreateOrderInput {
   items: { categoryCode: string; quantity: string | null; productId?: string | null }[];
   centerId?: string | null;
   donorContact?: string | null;
+  pickupCode?: string | null;
+  dropoffCode?: string | null;
   now: number;
 }
 
@@ -194,8 +198,8 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
          (id, need_id, donor_identity_id, status, pickup_zone_lat, pickup_zone_lng,
           pickup_exact_enc, pickup_exact_iv, dropoff_exact_enc, dropoff_exact_iv,
           region_code, pickup_code_hash, dropoff_code_hash, center_id, donor_contact,
-          created_at, updated_at)
-       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          pickup_code, dropoff_code, created_at, updated_at)
+       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id,
       input.needId,
@@ -211,6 +215,8 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
       input.dropoffCodeHash,
       input.centerId ?? null,
       input.donorContact ?? null,
+      input.pickupCode ?? null,
+      input.dropoffCode ?? null,
       input.now,
       input.now,
     ),
@@ -241,6 +247,51 @@ export async function listAvailableOrders(
     .all<OrderRow>();
   const items = await itemsForOrders(env, results.map((r) => r.id));
   return results.map((r) => toOrderPublic(r, items.get(r.id) ?? []));
+}
+
+async function enrich(env: Env, rows: OrderRow[]): Promise<{ row: OrderRow; public: OrderPublic }[]> {
+  const items = await itemsForOrders(env, rows.map((r) => r.id));
+  return rows.map((r) => ({ row: r, public: toOrderPublic(r, items.get(r.id) ?? []) }));
+}
+
+/** Órdenes publicadas por un donante (con su código de recogida para mostrárselo). */
+export async function listOrdersByDonor(env: Env, donorId: string) {
+  const { results } = await env.DB.prepare(
+    `SELECT * FROM delivery_order WHERE donor_identity_id = ? ORDER BY updated_at DESC LIMIT 200`,
+  )
+    .bind(donorId)
+    .all<OrderRow>();
+  return (await enrich(env, results)).map((e) => ({
+    ...e.public,
+    pickupCode: e.row.pickup_code,
+  }));
+}
+
+/** Órdenes dirigidas a las necesidades de una persona (con el código de entrega). */
+export async function listIncomingOrders(env: Env, needyId: string) {
+  const { results } = await env.DB.prepare(
+    `SELECT o.* FROM delivery_order o
+     JOIN need n ON n.id = o.need_id
+     WHERE n.owner_identity_id = ? ORDER BY o.updated_at DESC LIMIT 200`,
+  )
+    .bind(needyId)
+    .all<OrderRow>();
+  return (await enrich(env, results)).map((e) => ({
+    ...e.public,
+    dropoffCode: e.row.dropoff_code,
+  }));
+}
+
+/** Órdenes en curso asignadas a un repartidor (para reanudar al volver). */
+export async function listActiveOrdersBySupport(env: Env, supportId: string) {
+  const { results } = await env.DB.prepare(
+    `SELECT * FROM delivery_order
+     WHERE support_person_id = ? AND status IN ('tomada','recogida','en_camino')
+     ORDER BY updated_at DESC`,
+  )
+    .bind(supportId)
+    .all<OrderRow>();
+  return (await enrich(env, results)).map((e) => e.public);
 }
 
 /** Toma exclusiva de una orden (disponible → tomada) por un transportista. */

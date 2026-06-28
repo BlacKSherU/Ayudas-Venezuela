@@ -1,26 +1,29 @@
 import { useCallback, useEffect, useState } from "react";
-import { Gift, Warehouse, Boxes, Eye, Pencil, Trash2 } from "lucide-react";
+import { Gift, Warehouse, Boxes, Eye, Pencil, Trash2, ClipboardList } from "lucide-react";
 import { api, ApiError } from "../lib/api";
 import { useSession } from "../App";
 import { LoginPrompt } from "../components/LoginPrompt";
 import { CenterForm } from "../components/centers/CenterForm";
 import { DataTable, type ColumnDef } from "../components/table/DataTable";
 import { DetailModal } from "../components/Modal";
+import { OrdersTrackingTable } from "../components/OrdersTrackingTable";
 import { DonatePage } from "../pages/DonatePage";
 import { InventoryPage } from "../pages/InventoryPage";
-import type { MyCenter } from "../lib/types";
+import type { MyCenter, Order } from "../lib/types";
 
-type View = "donar" | "centros" | "inventario";
+type View = "donar" | "donaciones" | "centros" | "inventario";
 
 const TABS: { key: View; label: string; Icon: typeof Gift }[] = [
   { key: "donar", label: "Donar", Icon: Gift },
+  { key: "donaciones", label: "Mis donaciones", Icon: ClipboardList },
   { key: "centros", label: "Mis centros", Icon: Warehouse },
   { key: "inventario", label: "Inventario", Icon: Boxes },
 ];
 
 /** Sección Centros de acopio (feature 4, US4): donar, gestionar centros propios e inventario. */
 export function CentersSection({ view }: { view?: string }) {
-  const initial: View = view === "centros" || view === "inventario" ? view : "donar";
+  const initial: View =
+    view === "centros" || view === "inventario" || view === "donaciones" ? view : "donar";
   const [tab, setTab] = useState<View>(initial);
 
   return (
@@ -40,8 +43,49 @@ export function CentersSection({ view }: { view?: string }) {
         ))}
       </div>
       {tab === "donar" && <DonatePage />}
+      {tab === "donaciones" && <MyDonationsPanel />}
       {tab === "centros" && <MyCentersPanel />}
       {tab === "inventario" && <InventoryPage />}
+    </div>
+  );
+}
+
+/** Seguimiento de las órdenes que publicó el donante (con su código de recogida). */
+function MyDonationsPanel() {
+  const { identityId, loading } = useSession();
+  const [orders, setOrders] = useState<(Order & { pickupCode: string | null })[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  useEffect(() => {
+    if (!identityId) {
+      setBusy(false);
+      return;
+    }
+    setBusy(true);
+    api
+      .myOrders()
+      .then((r) => setOrders(r.orders))
+      .catch(() => setOrders([]))
+      .finally(() => setBusy(false));
+  }, [identityId]);
+
+  if (loading) return <div className="container">Cargando…</div>;
+  if (!identityId) return <LoginPrompt action="ver tus donaciones" />;
+
+  return (
+    <div className="container wide">
+      <h2>Mis donaciones</h2>
+      <p className="muted">
+        Tus órdenes publicadas y su estado. Guarda el <strong>código de recogida</strong>: se lo
+        das al repartilor cuando recoja los insumos.
+      </p>
+      <OrdersTrackingTable
+        orders={orders}
+        codeFor={(o) => (o as Order & { pickupCode: string | null }).pickupCode}
+        codeLabel="Código de recogida"
+        emptyText="Aún no has publicado órdenes de donación"
+        isLoading={busy}
+      />
     </div>
   );
 }
