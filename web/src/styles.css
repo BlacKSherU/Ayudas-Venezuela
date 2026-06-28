@@ -541,7 +541,7 @@ nav.section-nav {
 .page-btn.active { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
 
 /* Modal genérico (cabecera/cuerpo/pie) */
-.modal-panel { max-width: 560px; padding: 0; display: flex; flex-direction: column; }
+.modal-panel { max-width: 560px; max-height: 90vh; padding: 0; display: flex; flex-direction: column; background: var(--surface); border-radius: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28); overflow: hidden; }
 .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--border); }
 .modal-title { margin: 0; font-size: 1.15rem; }
 .modal-panel .modal-close { position: static; min-height: 40px; min-width: 40px; display: inline-flex; align-items: center; justify-content: center; }
