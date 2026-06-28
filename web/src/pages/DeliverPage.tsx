@@ -12,6 +12,17 @@ import { orderStatusLabel } from "../lib/orderStatus";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Need, Order, SupportProfile, SupportRole } from "../lib/types";
 
+/** Enlace para ver una evidencia (foto) por su clave, o "—" si no hay. */
+function evidenceLink(key: string | null) {
+  return key ? (
+    <a href={api.mediaUrl(key)} target="_blank" rel="noreferrer">
+      Ver foto
+    </a>
+  ) : (
+    "—"
+  );
+}
+
 // Feature 4: la interfaz de voluntario vive en VolunteersSection. Aquí se exportan las piezas
 // reutilizables (registro y flujo de órdenes) para que la sección las componga por rol.
 
@@ -277,6 +288,9 @@ export function OrdersList({ support }: { support: SupportProfile }) {
                 },
                 { label: "Contacto del donante", value: detail.donorContact ?? "—" },
                 { label: "Contacto del necesitado", value: detailNeed?.contactPublic ?? "—" },
+                { label: "Evidencia de donación", value: evidenceLink(detail.donationEvidence) },
+                { label: "Evidencia de recogida", value: evidenceLink(detail.pickupEvidence) },
+                { label: "Evidencia de entrega", value: evidenceLink(detail.deliveryEvidence) },
                 { label: "Región", value: detail.regionCode },
                 { label: "Estado", value: orderStatusLabel(detail.status) },
                 { label: "Actualizada", value: formatDateTime(detail.updatedAt) },
@@ -311,6 +325,7 @@ function OrderFlow({
 }) {
   const [order, setOrder] = useState<Order>(data.order);
   const [code, setCode] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -321,9 +336,15 @@ function OrderFlow({
     setBusy(true);
     setError(null);
     try {
-      const r = kind === "pickup" ? await api.pickupOrder(order.id, code) : await api.deliverOrder(order.id, code);
+      let evidenceKey: string | null = null;
+      if (photo) evidenceKey = (await api.uploadMedia("evidencia", photo)).key;
+      const r =
+        kind === "pickup"
+          ? await api.pickupOrder(order.id, code, evidenceKey)
+          : await api.deliverOrder(order.id, code, evidenceKey);
       setOrder(r.order);
       setCode("");
+      setPhoto(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Código incorrecto");
     } finally {
@@ -356,6 +377,9 @@ function OrderFlow({
             )}
             <label>Código de recogida (te lo da el donante)</label>
             <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
+            <div style={{ marginTop: "0.75rem" }}>
+              <MediaCapture label="Evidencia de recogida (opcional)" accept="image/*" onCapture={setPhoto} />
+            </div>
           </>
         )}
 
@@ -369,6 +393,9 @@ function OrderFlow({
             </p>
             <label>Código de entrega (te lo da la persona necesitada)</label>
             <input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
+            <div style={{ marginTop: "0.75rem" }}>
+              <MediaCapture label="Evidencia de entrega (opcional)" accept="image/*" onCapture={setPhoto} />
+            </div>
           </>
         )}
 

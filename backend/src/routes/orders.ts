@@ -26,6 +26,7 @@ import {
   listIncomingOrders,
   listOrdersByDonor,
   releaseOrder,
+  setOrderEvidence,
   setOrderStatus,
   takeOrder,
 } from "../db/logistics-queries";
@@ -45,6 +46,8 @@ const createSchema = z.object({
   centerId: z.string().nullish(),
   // Contacto del donante para que el voluntario coordine la recogida (opcional).
   donorContact: z.string().max(200).nullish(),
+  // Evidencia (foto) de la donación al publicar (opcional).
+  donationEvidenceKey: z.string().nullish(),
 });
 
 // POST /orders — el donante prepara recursos y publica una orden desde una necesidad pendiente.
@@ -53,7 +56,7 @@ ordersRoutes.post("/", async (c) => {
     const donorId = await requireSession(c);
     const parsed = createSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Datos inválidos", 400);
-    const { needId, centerId, donorContact } = parsed.data;
+    const { needId, centerId, donorContact, donationEvidenceKey } = parsed.data;
 
     const need = await getNeedRow(c.env, needId);
     if (!need) throw new AppError("NOT_FOUND", "Necesidad no encontrada", 404);
@@ -113,6 +116,7 @@ ordersRoutes.post("/", async (c) => {
       donorContact: donorContact?.trim() || null,
       pickupCode,
       dropoffCode,
+      donationEvidenceKey: donationEvidenceKey ?? null,
       now,
     });
 
@@ -221,7 +225,11 @@ ordersRoutes.post("/:id/take", async (c) => {
   }
 });
 
-const codeSchema = z.object({ code: z.string().min(4).max(20) });
+const codeSchema = z.object({
+  code: z.string().min(4).max(20),
+  // Evidencia (foto) opcional de la recogida o la entrega.
+  evidenceKey: z.string().nullish(),
+});
 
 // POST /orders/:id/pickup — confirma recogida con el código del donante.
 ordersRoutes.post("/:id/pickup", async (c) => {
@@ -258,6 +266,9 @@ async function advanceWithCode(
 
     const now = Date.now();
     await setOrderStatus(c.env, id, target, now, { delivered: target === "entregada" });
+    if (parsed.data.evidenceKey) {
+      await setOrderEvidence(c.env, id, target === "recogida" ? "pickup" : "delivery", parsed.data.evidenceKey);
+    }
     await broadcastToOrder(c.env, id, { type: "order.status", status: target, at: now });
 
     // Custodia en el inventario (feature 3): recogida (donante→transportista) y entrega

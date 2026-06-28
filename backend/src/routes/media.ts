@@ -49,14 +49,11 @@ mediaRoutes.get("/:key{.+}", async (c) => {
     const meta = await getMediaMeta(c.env, key);
     if (!meta) throw new AppError("NOT_FOUND", "Medio no encontrado", 404);
 
-    // MVP: la cédula nunca se sirve por esta vía (solo auditoría, fuera de alcance del MVP).
+    // La cédula nunca se sirve por esta vía (solo auditoría).
     if (meta.kind === "cedula") throw new AppError("FORBIDDEN", "Acceso restringido", 403);
 
-    // Acceso a evidencias/prueba: el dueño (reportante) puede verlas. La autorización por
-    // pertenencia a la orden se refina con el flujo de incidencias (US6).
-    if (meta.owner_ref && meta.owner_ref !== identityId) {
-      throw new AppError("FORBIDDEN", "No autorizado", 403);
-    }
+    // Feature 4 (transparencia): las evidencias de donación/recogida/entrega son visibles para
+    // cualquier persona autenticada (no exponen datos sensibles; respaldan la trazabilidad).
 
     const obj = await c.env.MEDIA.get(key);
     if (!obj) throw new AppError("NOT_FOUND", "Medio no encontrado", 404);

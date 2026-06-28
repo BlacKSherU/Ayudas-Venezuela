@@ -5,6 +5,7 @@ import { LoginPrompt } from "../components/LoginPrompt";
 import { MapPicker } from "../components/MapPicker";
 import { NeedLocationMap } from "../components/NeedLocationMap";
 import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
+import { MediaCapture } from "../components/MediaCapture";
 import { Stepper } from "../components/Stepper";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
@@ -22,6 +23,7 @@ export function DonatePage() {
   // Origen de recogida: un centro propio ("centro:<id>") o un punto en el mapa ("punto").
   const [pickupSource, setPickupSource] = useState<string>("punto");
   const [donorContact, setDonorContact] = useState("");
+  const [donationPhoto, setDonationPhoto] = useState<File | null>(null);
   const [codes, setCodes] = useState<{ pickupCode: string; dropoffCode: string } | null>(null);
   const [directDone, setDirectDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -73,7 +75,13 @@ export function DonatePage() {
       const base = usingCenter
         ? { needId: selected.id, centerId: pickupSource.slice("centro:".length) }
         : { needId: selected.id, pickupLocation: pickup! };
-      const r = await api.createOrder({ ...base, donorContact: donorContact.trim() || null });
+      let donationEvidenceKey: string | null = null;
+      if (donationPhoto) donationEvidenceKey = (await api.uploadMedia("evidencia", donationPhoto)).key;
+      const r = await api.createOrder({
+        ...base,
+        donorContact: donorContact.trim() || null,
+        donationEvidenceKey,
+      });
       setCodes({ pickupCode: r.pickupCode, dropoffCode: r.dropoffCode });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo publicar la orden");
@@ -214,6 +222,13 @@ export function DonatePage() {
                         maxLength={200}
                       />
                       <p className="muted">El voluntario lo verá para coordinar contigo la recogida.</p>
+                      <div style={{ margin: "0.75rem 0" }}>
+                        <MediaCapture
+                          label="Evidencia de la donación (opcional)"
+                          accept="image/*"
+                          onCapture={setDonationPhoto}
+                        />
+                      </div>
                       <div className="action-bar">
                         <button className="btn" disabled={!canPublish || busy} onClick={publish}>
                           {busy ? "Publicando…" : "Publicar orden de entrega"}

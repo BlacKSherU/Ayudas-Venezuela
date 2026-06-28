@@ -116,6 +116,9 @@ export interface OrderRow {
   donor_contact: string | null;
   pickup_code: string | null;
   dropoff_code: string | null;
+  donation_evidence_key: string | null;
+  pickup_evidence_key: string | null;
+  delivery_evidence_key: string | null;
   created_at: number;
   updated_at: number;
   taken_at: number | null;
@@ -158,6 +161,9 @@ export function toOrderPublic(row: OrderRow, items: OrderItemRow[]): OrderPublic
     regionCode: row.region_code,
     items: items.map((i) => ({ categoryCode: i.category_code, quantity: i.quantity })),
     donorContact: row.donor_contact,
+    donationEvidence: row.donation_evidence_key,
+    pickupEvidence: row.pickup_evidence_key,
+    deliveryEvidence: row.delivery_evidence_key,
     etaMs: row.eta_ms,
     updatedAt: row.updated_at,
   };
@@ -187,6 +193,7 @@ export interface CreateOrderInput {
   donorContact?: string | null;
   pickupCode?: string | null;
   dropoffCode?: string | null;
+  donationEvidenceKey?: string | null;
   now: number;
 }
 
@@ -198,8 +205,8 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
          (id, need_id, donor_identity_id, status, pickup_zone_lat, pickup_zone_lng,
           pickup_exact_enc, pickup_exact_iv, dropoff_exact_enc, dropoff_exact_iv,
           region_code, pickup_code_hash, dropoff_code_hash, center_id, donor_contact,
-          pickup_code, dropoff_code, created_at, updated_at)
-       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          pickup_code, dropoff_code, donation_evidence_key, created_at, updated_at)
+       VALUES (?, ?, ?, 'disponible', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id,
       input.needId,
@@ -217,6 +224,7 @@ export async function createOrder(env: Env, input: CreateOrderInput): Promise<st
       input.donorContact ?? null,
       input.pickupCode ?? null,
       input.dropoffCode ?? null,
+      input.donationEvidenceKey ?? null,
       input.now,
       input.now,
     ),
@@ -330,6 +338,17 @@ export async function setOrderStatus(
       .bind(status, now, orderId)
       .run();
   }
+}
+
+/** Guarda la clave de una evidencia (foto) en la orden: recogida o entrega. */
+export async function setOrderEvidence(
+  env: Env,
+  orderId: string,
+  kind: "pickup" | "delivery",
+  key: string,
+): Promise<void> {
+  const col = kind === "pickup" ? "pickup_evidence_key" : "delivery_evidence_key";
+  await env.DB.prepare(`UPDATE delivery_order SET ${col} = ? WHERE id = ?`).bind(key, orderId).run();
 }
 
 /** Devuelve el identityId del dueño (necesitado) de una necesidad. */

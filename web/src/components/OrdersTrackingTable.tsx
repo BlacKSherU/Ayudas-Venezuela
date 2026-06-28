@@ -3,9 +3,20 @@ import { Eye } from "lucide-react";
 import { useCategories } from "../App";
 import { DataTable, type ColumnDef } from "./table/DataTable";
 import { DetailModal } from "./Modal";
+import { api } from "../lib/api";
 import { orderStatusLabel } from "../lib/orderStatus";
 import { formatDateTime } from "../lib/format";
 import type { Order } from "../lib/types";
+
+function evidenceLink(key: string | null) {
+  return key ? (
+    <a href={api.mediaUrl(key)} target="_blank" rel="noreferrer">
+      Ver foto
+    </a>
+  ) : (
+    "—"
+  );
+}
 
 type Row = Order & { itemsText: string; code: string | null } & Record<string, unknown>;
 
@@ -92,6 +103,9 @@ export function OrdersTrackingTable({
                 { label: "Insumos", value: detail.itemsText },
                 { label: "Estado", value: orderStatusLabel(detail.status) },
                 { label: codeLabel, value: detail.code ?? "—" },
+                { label: "Evidencia de donación", value: evidenceLink(detail.donationEvidence) },
+                { label: "Evidencia de recogida", value: evidenceLink(detail.pickupEvidence) },
+                { label: "Evidencia de entrega", value: evidenceLink(detail.deliveryEvidence) },
                 { label: "Región", value: detail.regionCode },
                 { label: "Actualizada", value: formatDateTime(detail.updatedAt) },
               ]

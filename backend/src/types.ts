@@ -85,6 +85,9 @@ export interface OrderPublic {
   regionCode: string;
   items: { categoryCode: string; quantity: string | null }[];
   donorContact: string | null;
+  donationEvidence: string | null;
+  pickupEvidence: string | null;
+  deliveryEvidence: string | null;
   etaMs: number | null;
   updatedAt: number;
 }

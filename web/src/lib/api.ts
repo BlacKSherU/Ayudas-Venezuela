@@ -128,6 +128,7 @@ export const api = {
     pickupLocation?: { lat: number; lng: number };
     centerId?: string | null;
     donorContact?: string | null;
+    donationEvidenceKey?: string | null;
   }) =>
     request<{ order: Order; pickupCode: string; dropoffCode: string }>("/orders", {
       method: "POST",
@@ -143,10 +144,12 @@ export const api = {
       `/orders/${id}/take`,
       { method: "POST" },
     ),
-  pickupOrder: (id: string, code: string) =>
-    request<{ order: Order }>(`/orders/${id}/pickup`, { method: "POST", body: JSON.stringify({ code }) }),
-  deliverOrder: (id: string, code: string) =>
-    request<{ order: Order }>(`/orders/${id}/deliver`, { method: "POST", body: JSON.stringify({ code }) }),
+  pickupOrder: (id: string, code: string, evidenceKey?: string | null) =>
+    request<{ order: Order }>(`/orders/${id}/pickup`, { method: "POST", body: JSON.stringify({ code, evidenceKey }) }),
+  deliverOrder: (id: string, code: string, evidenceKey?: string | null) =>
+    request<{ order: Order }>(`/orders/${id}/deliver`, { method: "POST", body: JSON.stringify({ code, evidenceKey }) }),
+  /** URL para ver un medio (evidencia) por su clave. */
+  mediaUrl: (key: string) => `${API_BASE}/media/${key}`,
   releaseOrder: (id: string) => request<{ order: Order }>(`/orders/${id}/release`, { method: "POST" }),
 
   // Feature 4: seguimiento de órdenes

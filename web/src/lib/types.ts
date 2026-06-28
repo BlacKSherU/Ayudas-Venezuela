@@ -73,6 +73,9 @@ export interface Order {
   regionCode: string;
   items: NeedItem[];
   donorContact: string | null;
+  donationEvidence: string | null;
+  pickupEvidence: string | null;
+  deliveryEvidence: string | null;
   etaMs: number | null;
   updatedAt: number;
 }
