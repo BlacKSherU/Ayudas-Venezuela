@@ -116,7 +116,7 @@ export function App() {
           Saltar al contenido
         </a>
         <header className="app-bar app-bar-row">
-          <div>
+          <div className="app-bar-title">
             <h1>{t.appName}</h1>
             <p>{t.tagline}</p>
           </div>

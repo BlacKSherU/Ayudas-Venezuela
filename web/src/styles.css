@@ -301,8 +301,8 @@ textarea {
   justify-content: space-between;
   gap: 0.5rem;
 }
-/* El bloque de título encoge para que el botón de sesión nunca desborde. */
-.app-bar-row > div {
+/* Solo el bloque de título crece/encoge; así el control de sesión queda pegado a la derecha. */
+.app-bar-title {
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -334,7 +334,7 @@ header.app-bar .login-btn.secondary {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 .login-id {
   display: inline-flex;
@@ -374,14 +374,16 @@ nav.section-nav {
   overflow-wrap: anywhere;
 }
 
-/* Sub-navegación dentro de una sección (vistas). */
+/* Sub-navegación dentro de una sección (vistas): pills centradas horizontalmente. En pantallas
+   estrechas se ajustan a varias líneas (en vez de scroll), manteniéndose centradas. */
 .subnav {
   display: flex;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
   padding: 0.5rem 0.75rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
 }
 .subnav-tab {
   display: inline-flex;
