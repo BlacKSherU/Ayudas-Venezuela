@@ -370,7 +370,7 @@ export async function getLedgerByOwner(
       at: r.at,
       product: { name: r.product_name },
       counterparty: r.counterparty_owner
-        ? { publicName: await getPublicName(env, r.counterparty_owner) }
+        ? { publicName: await getPublicName(env, r.counterparty_owner), ref: r.counterparty_owner }
         : null,
     });
   }

@@ -4,18 +4,8 @@ import { useSession } from "../App";
 import { IdentityGate } from "../components/IdentityGate";
 import { ProductPicker } from "../components/ProductPicker";
 import { QuantityInput } from "../components/QuantityInput";
+import { MOVEMENT_LABEL } from "../lib/movements";
 import type { InventoryBalance, LedgerMovement, Product } from "../lib/types";
-
-const MOVEMENT_LABEL: Record<string, string> = {
-  alta: "Alta",
-  salida_recogida: "Entregado a transportista",
-  entrada_recogida: "Recibido (en tránsito)",
-  salida_entrega: "Entregado",
-  entrada_entrega: "Recibido",
-  entrega_directa_salida: "Entrega directa",
-  entrada_directa: "Recibido (directo)",
-  baja: "Baja",
-};
 
 export function InventoryPage() {
   const { identityId, loading } = useSession();
@@ -122,7 +112,12 @@ export function InventoryPage() {
             {m.direction === "in" ? "+" : "−"}
             {m.declaredQty} {m.declaredUnit}
             {m.reason && <span className="muted"> ({m.reason})</span>}
-            {m.counterparty && <span className="muted"> · {m.counterparty.publicName}</span>}
+            {m.counterparty && (
+              <>
+                {" · "}
+                <a href={`#/ledger?ref=${m.counterparty.ref}`}>{m.counterparty.publicName}</a>
+              </>
+            )}
           </li>
         ))}
       </ul>

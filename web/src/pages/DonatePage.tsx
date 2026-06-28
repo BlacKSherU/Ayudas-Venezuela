@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useSession, useCategories } from "../App";
 import { IdentityGate } from "../components/IdentityGate";
 import { MapPicker } from "../components/MapPicker";
+import { DirectDeliveryForm } from "../components/DirectDeliveryForm";
 import { Truck } from "lucide-react";
 import { setRoleTag, requestPushPermission } from "../lib/push";
 import type { Need } from "../lib/types";
@@ -13,8 +14,10 @@ export function DonatePage() {
   const categories = useCategories();
   const [needs, setNeeds] = useState<Need[]>([]);
   const [selected, setSelected] = useState<Need | null>(null);
+  const [mode, setMode] = useState<"order" | "direct">("order");
   const [pickup, setPickup] = useState<{ lat: number; lng: number } | null>(null);
   const [codes, setCodes] = useState<{ pickupCode: string; dropoffCode: string } | null>(null);
+  const [directDone, setDirectDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +57,16 @@ export function DonatePage() {
     return (
       <div className="container">
         <IdentityGate />
+      </div>
+    );
+
+  if (directDone)
+    return (
+      <div className="container">
+        <div className="notice">
+          <h2>¡Entrega directa registrada!</h2>
+          <p>Quedó en el libro público de inventario, como salida tuya y entrada del necesitado.</p>
+        </div>
       </div>
     );
 
@@ -106,16 +119,38 @@ export function DonatePage() {
           <p>
             Donación para: <strong>{selected.items.map((i) => label(i.categoryCode)).join(", ")}</strong>
           </p>
-          <p className="muted">Marca dónde recogerá el transportista tus insumos:</p>
-          <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button className="btn secondary" onClick={() => setSelected(null)}>
-              Volver
+          <div className="chips" role="group" aria-label="Cómo entregar">
+            <button type="button" className="chip" aria-pressed={mode === "order"} onClick={() => setMode("order")}>
+              Que un transportista la lleve
             </button>
-            <button className="btn" disabled={!pickup || busy} onClick={publish}>
-              {busy ? "Publicando…" : "Publicar orden de entrega"}
+            <button type="button" className="chip" aria-pressed={mode === "direct"} onClick={() => setMode("direct")}>
+              Entregar yo mismo (en mano)
             </button>
           </div>
+
+          {mode === "order" ? (
+            <>
+              <p className="muted" style={{ marginTop: "0.75rem" }}>
+                Marca dónde recogerá el transportista tus insumos:
+              </p>
+              <MapPicker onPick={(lat, lng) => setPickup({ lat, lng })} />
+              <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
+                <button className="btn secondary" onClick={() => setSelected(null)}>
+                  Volver
+                </button>
+                <button className="btn" disabled={!pickup || busy} onClick={publish}>
+                  {busy ? "Publicando…" : "Publicar orden de entrega"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div style={{ marginTop: "0.75rem" }}>
+              <DirectDeliveryForm needId={selected.id} onDone={() => setDirectDone(true)} />
+              <button className="btn secondary" style={{ marginTop: "0.5rem" }} onClick={() => setSelected(null)}>
+                Volver
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -103,7 +103,7 @@ forma de editar/borrar movimientos.
 ### Implementation for User Story 3
 
 - [X] T020 [US3] Implementar `GET /inventory/:ref/ledger` (público) y asegurar que NO existen endpoints de update/delete de movimientos en `backend/src/routes/inventory.ts`
-- [ ] T021 [P] [US3] Construir `PublicLedgerPage` (inventario y libro público de cualquiera, con alias/nombre público) en `web/src/pages/PublicLedgerPage.tsx`
+- [X] T021 [P] [US3] Construir `PublicLedgerPage` (inventario y libro público de cualquiera, con alias/nombre público) en `web/src/pages/PublicLedgerPage.tsx`
 - [X] T022 [US3] Implementar `PATCH /identity/public-name` y el alias no personal por defecto en las respuestas públicas, en `backend/src/routes/identity.ts`
 
 **Checkpoint**: US1+US2+US3 → **MVP** (catálogo + inventario + libro público inmutable).
@@ -148,7 +148,7 @@ movimientos.
 
 - [X] T027 [US5] Enganchar en `backend/src/routes/orders.ts`: al confirmar recogida (salida donante + entrada transportista) y al confirmar entrega (salida transportista + entrada necesitado)
 - [X] T028 [US5] Implementar `POST /deliveries/direct` (entrega directa donante→necesitado, par de movimientos) en `backend/src/routes/deliveries.ts`
-- [ ] T029 [P] [US5] Construir la UI de entrega directa (seleccionar destinatario/necesidad + productos) en `web/src/`
+- [X] T029 [P] [US5] Construir la UI de entrega directa (seleccionar destinatario/necesidad + productos) en `web/src/`
 
 **Checkpoint**: US5 funcional.
 
@@ -196,11 +196,11 @@ con integridad y que ningún dato previo se perdió.
 
 ## Phase 10: Polish & Cross-Cutting Concerns
 
-- [ ] T036 [P] Tiempo real opcional del inventario (difundir movimientos vía Durable Object) o documentar el fallback por recarga en `backend/src/`
-- [ ] T037 [P] Pase de accesibilidad WCAG 2.1 AA del `ProductPicker` y de las vistas públicas en `web/src/`
-- [ ] T038 [P] Rendimiento: búsqueda de productos ≤1 s e índices de agregados; presupuesto 3G en `backend/` y `web/`
-- [ ] T039 [P] Documentación: actualizar `README.md` y `quickstart.md` (catálogo, inventario, distribución)
-- [ ] T040 Validar `quickstart.md` de extremo a extremo (local + smoke de despliegue)
+- [X] T036 [P] Tiempo real opcional del inventario (difundir movimientos vía Durable Object) o documentar el fallback por recarga en `backend/src/`
+- [X] T037 [P] Pase de accesibilidad WCAG 2.1 AA del `ProductPicker` y de las vistas públicas en `web/src/`
+- [X] T038 [P] Rendimiento: búsqueda de productos ≤1 s e índices de agregados; presupuesto 3G en `backend/` y `web/`
+- [X] T039 [P] Documentación: actualizar `README.md` y `quickstart.md` (catálogo, inventario, distribución)
+- [X] T040 Validar `quickstart.md` de extremo a extremo (local + smoke de despliegue)
 
 ---
 

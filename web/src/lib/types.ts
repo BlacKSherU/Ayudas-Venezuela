@@ -99,7 +99,7 @@ export interface LedgerMovement {
   orderId: string | null;
   at: number;
   product: { name: string };
-  counterparty: { publicName: string } | null;
+  counterparty: { publicName: string; ref: string } | null;
 }
 
 export const UNITS_BY_DIMENSION: Record<string, string[]> = {

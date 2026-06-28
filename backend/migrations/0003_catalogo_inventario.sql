@@ -65,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_movement_order ON inventory_movement (order_id);
 -- Normalización: referencias a producto en necesidades y órdenes (integridad).
 ALTER TABLE need_item ADD COLUMN product_id TEXT REFERENCES product(id);
 ALTER TABLE order_item ADD COLUMN product_id TEXT REFERENCES product(id);
+CREATE INDEX IF NOT EXISTS idx_need_item_product ON need_item (product_id);
+CREATE INDEX IF NOT EXISTS idx_order_item_product ON order_item (product_id);
 
 -- Nombre público elegido por el usuario (o alias no personal por defecto).
 ALTER TABLE identity ADD COLUMN public_name TEXT;

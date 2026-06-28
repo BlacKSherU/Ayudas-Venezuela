@@ -36,6 +36,17 @@ npm run dev:backend   # Worker local (wrangler dev)
 npm run dev:web       # Frontend (Vite)
 ```
 
+## Funcionalidades
+
+- **Feature 1** — Mapa interactivo en tiempo real de necesidades (publicar, ver en vivo).
+- **Feature 2** — Roles (personal de apoyo), órdenes de entrega tipo delivery, incidencias con
+  evidencia, rastreo en vivo, reputación; OTP por correo y WhatsApp; push (OneSignal).
+- **Feature 3** — Catálogo común de productos con buscador y deduplicación; **inventario
+  público por usuario** con **libro de movimientos inmutable** (transparencia); custodia en dos
+  pasos integrada con las entregas; unidades con conversiones; vista de distribución
+  (oferta vs demanda). El inventario se actualiza por recarga tras cada acción (el tiempo real
+  por Durable Object queda como mejora futura).
+
 ## Principios no negociables
 
 1. **Dignidad y protección** de las personas: ubicación pública ofuscada por zona; contacto
